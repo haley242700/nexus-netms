@@ -1,4 +1,4 @@
-FROM codercom/code-server:latest
+FROM docker.1ms.run/codercom/code-server:latest
 
 USER root
 
