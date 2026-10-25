@@ -1,0 +1,2 @@
+-r apps/speedtest-ap/requirements.txt
+paramiko==5.1.0

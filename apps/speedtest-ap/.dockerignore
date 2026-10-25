@@ -1,0 +1,12 @@
+.git
+.gitignore
+.venv
+.env
+*.env
+__pycache__
+*.pyc
+*.db
+*.log
+*.jsonl
+README.md
+*.compose.yaml

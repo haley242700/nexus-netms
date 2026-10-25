@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#070a12">
+  <title>NEXUS · 漫游与异常事件</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/events.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div><div class="grid-overlay"></div>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="NEXUS 首页"><span class="brand-mark"><i></i><i></i><i></i></span><span><strong>NEXUS</strong><small>HOME NETWORK</small></span></a>
+      <div class="topbar-right"><nav class="main-nav" aria-label="NEXUS 页面"><a href="/">运行总览</a><a class="active" href="/events">事件统计</a></nav><div class="live-pill" id="live-pill"><span class="live-dot"></span><span id="live-text">LIVE</span></div><time id="clock">--:--:--</time></div>
+    </header>
+    <main class="events-main">
+      <section class="event-hero glass-panel">
+        <div><div class="eyebrow"><span></span>EVENT INTELLIGENCE</div><h1>漫游与异常<em>事件统计</em></h1><p>持续记录 AP 关联变化与非漫游离线，历史数据从 <b id="events-since">今天</b> 开始。</p></div>
+        <div class="event-hero-status"><span class="status-orbit"><i></i></span><div><small>ACTIVE ANOMALIES</small><strong id="active-anomalies">--</strong><span>当前离线事件</span></div></div>
+      </section>
+      <section class="kpi-grid event-kpis" aria-label="漫游核心统计">
+        <article class="kpi cyan"><div class="kpi-top"><span>历史漫游总次数</span><span class="kpi-icon">⇄</span></div><div class="kpi-value"><strong id="roam-total">--</strong><small>次</small></div><div class="kpi-foot"><span>ROAMING EVENTS</span><span>累计</span></div></article>
+        <article class="kpi violet"><div class="kpi-top"><span>平均漫游确认耗时</span><span class="kpi-icon">↯</span></div><div class="kpi-value"><strong id="roam-duration">--</strong><small>秒</small></div><div class="kpi-foot"><span id="duration-samples">-- 个有效样本</span><span>≤ 60 秒</span></div></article>
+        <article class="kpi blue"><div class="kpi-top"><span>漫游前平均信号</span><span class="kpi-icon">◉</span></div><div class="kpi-value"><strong id="roam-rssi">--</strong><small>dBm</small></div><div class="kpi-foot"><span>TRIGGER RSSI</span><span>离开 AP 前</span></div></article>
+        <article class="kpi green"><div class="kpi-top"><span>非漫游异常离线</span><span class="kpi-icon">!</span></div><div class="kpi-value"><strong id="anomaly-total">--</strong><small>次</small></div><div class="kpi-foot"><span id="anomaly-split">终端 -- · AP --</span><span>已排除漫游</span></div></article>
+      </section>
+      <div class="content-grid events-grid">
+        <section class="glass-panel panel span-7">
+          <div class="panel-head"><div><span class="section-index">01</span><h2>漫游事件</h2></div><span class="panel-tag">ROAMING LOG</span></div>
+          <div class="ap-stats-title"><span>全部 AP 漫游统计</span><small>接入 / 离开</small></div>
+          <div class="ap-leaders" id="ap-stats"><div class="ap-stats-empty">正在读取 AP 统计…</div></div>
+          <div class="event-list-head roam-columns"><span>时间 / 终端</span><span>离开 AP → 接入 AP</span><span>离开时信号</span><span>确认耗时</span></div>
+          <div class="event-list" id="roam-list"><div class="loading">正在读取漫游事件…</div></div>
+        </section>
+        <section class="glass-panel panel span-5">
+          <div class="panel-head"><div><span class="section-index">02</span><h2>异常事件</h2></div><span class="panel-tag">NON-ROAM OFFLINE</span></div>
+          <div class="reason-strip" id="reason-strip"><span>原因／线索统计读取中…</span></div>
+          <div class="event-list-head anomaly-columns"><span>时间 / 设备 / 结论</span><span>原因／线索</span><span>状态</span></div>
+          <div class="event-list" id="anomaly-list"><div class="loading">正在读取异常事件…</div></div>
+        </section>
+        <section class="glass-panel panel span-12 methodology"><span class="section-index">STATISTICAL METHOD</span><div><p><strong>漫游耗时</strong>是相邻采样确认 AP 变化的时间，不是 802.11 协议切换耗时；系统日志不提供协议级切换耗时，超过 60 秒的粗采样不计入平均值。</p><p><strong>异常离线</strong>需要连续采样确认。60 秒内确认接入不同 AP 会改判为漫游；同 AP 和全零新 AP 的日志不会计入成功漫游。</p><p><strong>原因／线索</strong>“弱信号线索”只表示离线前 RSSI ≤ -75 dBm，不是确定原因；0、-95、-99 不参与分类。没有设备原生原因时显示“设备未上报原因”，原始证据可展开查看。</p></div></section>
+      </div>
+    </main>
+    <footer><span><i class="status-dot"></i>PERSISTENT EVENT STORE</span><span>SQLITE · READ-ONLY TELEMETRY · 3S REFRESH</span></footer>
+  </div>
+  <div class="toast" id="toast" role="status"></div><script src="/events.js" defer></script>
+</body>
+</html>

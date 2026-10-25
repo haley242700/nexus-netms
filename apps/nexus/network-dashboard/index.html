@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070a12">
+  <title>NEXUS · 全屋网络中心</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="grid-overlay"></div>
+
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="NEXUS 首页">
+        <span class="brand-mark"><i></i><i></i><i></i></span>
+        <span><strong>NEXUS</strong><small>HOME NETWORK</small></span>
+      </a>
+      <div class="topbar-right">
+        <nav class="main-nav" aria-label="NEXUS 页面"><a class="active" href="/">运行总览</a><a href="/events">事件统计</a></nav>
+        <div class="live-pill" id="live-pill"><span class="live-dot"></span><span id="live-text">LIVE</span></div>
+        <time id="clock">--:--:--</time>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero glass-panel">
+        <div class="traffic-dashboard">
+          <section class="traffic-block gateway-live">
+            <div class="traffic-title"><span><i class="status-dot"></i>GATEWAY THROUGHPUT</span><b>3 SEC</b></div>
+            <div class="gateway-total"><strong id="gateway-rate">--</strong><span id="gateway-unit">Mbps</span></div>
+            <div class="gateway-caption">网关 WAN 总实时吞吐</div>
+            <div class="gateway-history"><span>历史累计</span><strong id="gateway-history">--</strong></div>
+            <div class="gateway-directions"><span>↓ 下载 <b id="gateway-down">--</b><small id="gateway-down-total">累计 --</small></span><span>↑ 上行 <b id="gateway-up">--</b><small id="gateway-up-total">累计 --</small></span></div>
+            <div class="data-stream" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </section>
+          <section class="traffic-block ap-throughput">
+            <div class="traffic-title"><span>AP LIVE + ASSOCIATED TOTAL</span><b>6 NODES</b></div>
+            <div class="ap-throughput-list" id="ap-throughput-list"><div class="loading">读取 AP 吞吐…</div></div>
+          </section>
+          <section class="traffic-block top-clients">
+            <div class="traffic-title"><span>TRAFFIC LEADERS · LIVE + TOTAL</span><b>TOP 3</b></div>
+            <div class="top-client-list" id="top-client-list"><div class="loading">分析终端流量…</div></div>
+          </section>
+        </div>
+        <div class="health-visual" aria-label="网络健康评分">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <svg class="health-ring" viewBox="0 0 140 140" role="img">
+            <defs><linearGradient id="ring-gradient" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#62f5ff"/><stop offset="1" stop-color="#8b7cff"/></linearGradient></defs>
+            <circle class="ring-track" cx="70" cy="70" r="56"/>
+            <circle class="ring-value" id="health-ring" cx="70" cy="70" r="56"/>
+          </svg>
+          <div class="health-number"><strong id="health-score">--</strong><span>NETWORK HEALTH</span><small id="health-label">正在连接</small></div>
+        </div>
+      </section>
+
+      <section class="kpi-grid" aria-label="核心网络指标">
+        <article class="kpi cyan">
+          <div class="kpi-top"><span>在线 AP</span><span class="kpi-icon">⌁</span></div>
+          <div class="kpi-value"><strong id="ap-online">--</strong><small>/ <span id="ap-total">--</span></small></div>
+          <div class="kpi-foot"><span class="tiny-bars"><i></i><i></i><i></i><i></i></span><span>全域在线</span></div>
+        </article>
+        <article class="kpi violet">
+          <div class="kpi-top"><span>无线终端</span><span class="kpi-icon">◎</span></div>
+          <div class="kpi-value"><strong id="client-total">--</strong><small>台</small></div>
+          <div class="kpi-foot"><span id="five-g">--</span><span>5 GHz</span></div>
+        </article>
+        <article class="kpi blue">
+          <div class="kpi-top"><span>平均信号</span><span class="kpi-icon">◉</span></div>
+          <div class="kpi-value"><strong id="avg-rssi">--</strong><small>dBm</small></div>
+          <div class="kpi-foot"><span id="signal-quality">分析中</span><span>RSSI</span></div>
+        </article>
+        <article class="kpi green">
+          <div class="kpi-top"><span>AP 平均延迟</span><span class="kpi-icon">↯</span></div>
+          <div class="kpi-value"><strong id="avg-ping">--</strong><small>ms</small></div>
+          <div class="kpi-foot"><span id="weak-count">--</span><span>弱信号终端</span></div>
+        </article>
+      </section>
+
+      <div class="content-grid">
+        <section class="glass-panel panel span-8">
+          <div class="panel-head"><div><span class="section-index">01</span><h2>AP 矩阵</h2></div><span class="panel-tag">ACCESS POINTS</span></div>
+          <div class="ap-grid" id="ap-grid"><div class="loading">正在读取 AP 遥测数据…</div></div>
+        </section>
+
+        <section class="glass-panel panel span-4">
+          <div class="panel-head"><div><span class="section-index">02</span><h2>延迟脉冲</h2></div><span class="panel-tag">60 MIN</span></div>
+          <div class="chart-summary"><strong id="chart-current">--</strong><span>ms</span><small>AVG AP LATENCY</small></div>
+          <svg class="latency-chart" id="latency-chart" viewBox="0 0 600 210" preserveAspectRatio="none" aria-label="最近一小时 AP 平均延迟">
+            <defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#5deeff" stop-opacity=".35"/><stop offset="1" stop-color="#5deeff" stop-opacity="0"/></linearGradient></defs>
+            <g class="chart-grid"><line x1="0" y1="35" x2="600" y2="35"/><line x1="0" y1="95" x2="600" y2="95"/><line x1="0" y1="155" x2="600" y2="155"/></g>
+            <path id="latency-area" class="latency-area"/><path id="latency-line" class="latency-line"/>
+          </svg>
+          <div class="chart-axis"><span>-60 min</span><span>-30 min</span><span>NOW</span></div>
+          <div class="mini-stats"><div><span>采集状态</span><strong id="collector-status">--</strong></div><div><span>MLO 终端</span><strong id="mlo-count">--</strong></div></div>
+        </section>
+
+        <section class="glass-panel panel span-7">
+          <div class="panel-head"><div><span class="section-index">03</span><h2>终端信号雷达</h2></div><span class="panel-tag">WEAKEST FIRST</span></div>
+          <div class="client-list" id="client-list"><div class="loading">正在扫描终端…</div></div>
+          <div class="client-pagination" aria-label="终端列表分页">
+            <button type="button" id="client-prev" aria-label="上一页" disabled>←</button>
+            <span id="client-range">0 台</span>
+            <span id="client-page">1 / 1</span>
+            <button type="button" id="client-next" aria-label="下一页" disabled>→</button>
+          </div>
+        </section>
+
+        <section class="glass-panel panel span-5">
+          <div class="panel-head"><div><span class="section-index">04</span><h2>信道负载</h2></div><span class="panel-tag">CHANNELS</span></div>
+          <div class="channel-list" id="channel-list"><div class="loading">正在分析频谱…</div></div>
+        </section>
+      </div>
+    </main>
+
+    <footer><span><i class="status-dot"></i>READ-ONLY TELEMETRY</span><span>PROMETHEUS · REYEE EXPORTER · 3S REFRESH</span></footer>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

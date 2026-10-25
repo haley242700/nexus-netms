@@ -1,0 +1,267 @@
+/* ============================================================
+   Heimdall · iOS 27 液态玻璃 (Liquid Glass) 主题
+   由 Kimi 生成 · 2026-10-25 v2
+   高通透玻璃：低 tint + 强模糊 + 镜面高光边
+   ============================================================ */
+
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.028);
+    --glass-bg-strong: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.085);
+    --glass-shadow: 0 6px 22px rgba(0, 0, 0, 0.16);
+    --glass-radius: 20px;
+    --accent: #0A84FF;
+    --accent-soft: rgba(10, 132, 255, 0.22);
+    --text-primary: #F5F5F7;
+    --text-secondary: rgba(245, 245, 247, 0.60);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---------- 全局底色：4K 深色壁纸 + 暗色薄纱 ---------- */
+html, body {
+    background:
+        radial-gradient(1000px 620px at 50% 44%, rgba(96, 138, 255, 0.22), transparent 70%),
+        linear-gradient(rgba(8, 8, 12, 0.12), rgba(8, 8, 12, 0.32)),
+        url('/wallpaper.jpg') center center / cover no-repeat fixed !important;
+    color: var(--text-primary) !important;
+}
+
+/* Heimdall 默认背景画在 #app 层（/img/bg1.jpg），会盖住 body 的壁纸，必须关掉 */
+#app {
+    background: none !important;
+}
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
+        "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+    background: var(--accent-soft);
+    color: #fff;
+}
+
+/* ---------- 顶栏：极薄玻璃 ---------- */
+header.appheader {
+    background: rgba(16, 16, 20, 0.25);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    backdrop-filter: blur(28px) saturate(150%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+header.appheader ul li a,
+header.appheader a {
+    color: var(--text-secondary) !important;
+    transition: color 0.2s ease;
+}
+
+header.appheader ul li a:hover {
+    color: var(--text-primary) !important;
+}
+
+/* ---------- 侧滑导航 ---------- */
+nav.sidenav {
+    background: rgba(18, 18, 24, 0.42);
+    -webkit-backdrop-filter: blur(32px) saturate(150%);
+    backdrop-filter: blur(32px) saturate(150%);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+nav.sidenav h2 {
+    color: var(--text-secondary) !important;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+nav.sidenav #pinlist li {
+    color: var(--text-primary) !important;
+}
+
+nav.sidenav a.active,
+nav.sidenav .close-sidenav {
+    color: var(--accent) !important;
+}
+
+/* ---------- 应用磁贴：液态玻璃 ---------- */
+section.item-container {
+    perspective: 600px;
+}
+
+section.item-container .item {
+    background: var(--glass-bg) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(160%);
+    backdrop-filter: blur(32px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--glass-radius);
+    /* 镜面高光：顶边一道内发光，模拟玻璃折射 */
+    box-shadow: var(--glass-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+    transition: transform 0.28s var(--ease-spring),
+        background 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+    overflow: hidden;
+    cursor: pointer;              /* 整卡手型：可点击 */
+    -webkit-user-select: none;
+    user-select: none;            /* 磁贴是按钮，不进入文本选择 */
+}
+
+/* 磁贴内任何文字/图标都保持手型，不出现文本光标 */
+section.item-container .item .details,
+section.item-container .item .details .title,
+section.item-container .item .title.white,
+section.item-container .item .title.black,
+section.item-container .item .app-icon-container,
+section.item-container .item div {
+    cursor: pointer;
+}
+
+section.item-container:hover .item {
+    transform: scale(1.045) translateY(-3px);
+    background: var(--glass-bg-strong) !important;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+
+section.item-container:active .item {
+    transform: scale(0.98);
+    transition-duration: 0.1s;
+}
+
+/* 磁贴标题 */
+section.item-container .item .details .title,
+section.item-container .item .title.white,
+section.item-container .item .title.black {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.30);
+}
+
+/* 图标：微浮起 + 投影 */
+section.item-container .item .app-icon-container img.app-icon {
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.30));
+    transition: transform 0.28s var(--ease-spring);
+}
+
+section.item-container:hover .item .app-icon-container img.app-icon {
+    transform: scale(1.1);
+}
+
+/* 箭头链接：强调色圆形底（保持可点，整卡点击由 custom_js 实现） */
+section.item-container .item a.link,
+section.item-container .item a.link.white,
+section.item-container .item a.link.black {
+    color: #fff !important;
+    background: var(--accent-soft);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s var(--ease-spring);
+}
+
+section.item-container .item a.link:hover {
+    background: var(--accent);
+    transform: scale(1.12);
+}
+
+/* 编辑铅笔图标 */
+section.item-container a.item-edit {
+    color: var(--text-secondary) !important;
+    opacity: 0.55;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+section.item-container:hover a.item-edit {
+    opacity: 1;
+    color: var(--accent) !important;
+}
+
+/* ---------- 增强型磁贴实时数据 ---------- */
+section.item-container .item .livestats {
+    color: var(--text-secondary) !important;
+}
+
+section.item-container .item .livestats li,
+section.item-container .item .livestats span {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 1px 7px;
+}
+
+/* ---------- 搜索框：玻璃药丸 ---------- */
+.content .search form input[type="text"],
+.content .search input,
+#searchinput,
+input[name="q"] {
+    background: rgba(255, 255, 255, 0.028) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.085) !important;
+    border-radius: 999px !important;
+    color: var(--text-primary) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.content .search form input[type="text"]:focus,
+.content .search input:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    outline: none !important;
+}
+
+/* ---------- 文件夹 / 分组标题 ---------- */
+.content h2, .content h3,
+#sortable h2, .tag-title {
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+}
+
+/* ---------- 表单控件（设置页同样受益） ---------- */
+input, select, textarea {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-radius: 10px !important;
+    color: var(--text-primary) !important;
+}
+
+.btn, button, input[type="submit"] {
+    background: var(--accent) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    color: #fff !important;
+    transition: transform 0.2s var(--ease-spring), opacity 0.2s ease;
+}
+
+.btn:hover, button:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+/* ---------- 滚动条 ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.24);
+}
+
+/* ---------- 移动端微调 ---------- */
+@media (max-width: 768px) {
+    :root { --glass-radius: 18px; }
+    section.item-container:hover .item {
+        transform: none; /* 触屏无悬停 */
+    }
+}

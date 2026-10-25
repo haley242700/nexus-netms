@@ -1,0 +1,12 @@
+services:
+  login-test:
+    build:
+      context: /volume1/docker/tmp-login-test
+      args:
+        CACHE_BUST: "2026-10-24-r3"
+    image: login-test:r3
+    container_name: login-test
+    env_file:
+      - /volume1/docker/tmp-login-test/login.env
+    network_mode: host
+    restart: "no"

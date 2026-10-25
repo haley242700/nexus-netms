@@ -1,0 +1,19 @@
+services:
+  speedtest-ap:
+    build:
+      context: /volume1/docker/speedtest-ap
+      args:
+        CACHE_BUST: "2026-10-24-ap5"
+    image: speedtest-ap:ap5
+    container_name: speedtest-ap
+    env_file:
+      - /volume1/docker/speedtest-ap/login.env
+    environment:
+      LIBRESPEED_URL: "http://192.168.110.54:8088"
+      AP_SERVER_PORT: "18090"
+      ROAM_POLL_INTERVAL: "300"
+      ROAM_LOG_DIR: "/app/logs"
+    volumes:
+      - /volume1/docker/speedtest-ap/logs:/app/logs
+    network_mode: host
+    restart: unless-stopped

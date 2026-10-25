@@ -1,0 +1,36 @@
+# 凭据与本地配置：任何目录下的 env 文件都不提交，示例除外
+.env
+*.env
+!*.env.example
+config/secrets/
+**/htpasswd
+*.pkl
+*.b64
+*.pem
+*.key
+
+# 本地产物：截图、日志、数据库、研究文件和重构备份
+artifacts/
+dist/
+
+# Python 与测试缓存
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 运行数据
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.jsonl
+
+# 浏览器、操作系统与编辑器
+.chrome*/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

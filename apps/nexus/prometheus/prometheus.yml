@@ -1,0 +1,69 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: reyee
+    scrape_interval: 3s
+    static_configs:
+      - targets: ["reyee-exporter:9108"]
+
+  - job_name: ap_ping
+    metrics_path: /probe
+    params:
+      module: [icmp]
+    static_configs:
+      - targets: ["192.168.110.19"]
+        labels:
+          name: 一楼主卧AP
+      - targets: ["192.168.110.23"]
+        labels:
+          name: 一楼北卧AP
+      - targets: ["192.168.110.11"]
+        labels:
+          name: 一楼客厅AP
+      - targets: ["192.168.110.17"]
+        labels:
+          name: 负一卧室AP
+      - targets: ["192.168.110.13"]
+        labels:
+          name: 负一客厅AP
+      - targets: ["192.168.110.20"]
+        labels:
+          name: 负一电脑房AP
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: ping
+    metrics_path: /probe
+    params:
+      module: [icmp]
+    static_configs:
+      - targets:
+          - 192.168.110.1
+        labels:
+          name: 网关
+      - targets:
+          - 223.5.5.5
+        labels:
+          name: 阿里DNS
+      - targets:
+          - 119.29.29.29
+        labels:
+          name: 腾讯DNS
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
