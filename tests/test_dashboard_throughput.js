@@ -2,15 +2,18 @@ const fs = require("fs");
 const vm = require("vm");
 const assert = require("assert");
 const source = fs.readFileSync("apps/nexus/network-dashboard/app.js", "utf8");
+const flowSource = fs.readFileSync("apps/nexus/network-dashboard/flow-field.js", "utf8");
 const page = fs.readFileSync("apps/nexus/network-dashboard/index.html", "utf8");
 assert(page.includes('id="flow-canvas"'));
+assert(page.includes('class="flow-node-meter wan-meter"><span>上行总量'));
+assert(page.includes('class="flow-node-meter home-meter"><span>下行总量'));
 assert(!page.includes('id="top-client-list"'));
 assert(!source.includes("renderTopClients(topClients"));
 const elements = {};
 const frames = [];
 const flowUpdates = [];
 const context = {
-  window: {matchMedia: () => ({matches: true}), nexusFlowUpdate: (down, up) => flowUpdates.push({down, up})},
+  window: {matchMedia: () => ({matches: true}), nexusFlowUpdate: (down, up, totalDown, totalUp) => flowUpdates.push({down, up, totalDown, totalUp})},
   performance: {now: () => 0},
   requestAnimationFrame: callback => { frames.push(callback); return frames.length; },
   cancelAnimationFrame() {},
@@ -54,8 +57,9 @@ context.renderGateway([
 assert.strictEqual(Number(elements["gateway-rate"].textContent), 110);
 assert(elements["gateway-down"].textContent.includes("100"));
 assert.strictEqual(elements["gateway-history"].textContent, "1.50 GB");
-assert.strictEqual(elements["gateway-down-total"].textContent, "累计 1.00 GB");
-assert.deepStrictEqual(flowUpdates.at(-1), {down: 12500000, up: 1250000});
+assert.deepStrictEqual(flowUpdates.at(-1), {down: 12500000, up: 1250000, totalDown: 1073741824, totalUp: 536870912});
+assert(flowSource.includes("paintCounters(now)"));
+assert(flowSource.includes("formatKb"));
 
 context.renderApThroughput([
   {metric: {ap: "一楼主卧AP", direction: "up"}, value: [0, "1000000"]},

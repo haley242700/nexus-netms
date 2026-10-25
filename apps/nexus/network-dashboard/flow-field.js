@@ -16,6 +16,15 @@
   let targetActivity = 0.18;
   let downActivity = 0.5;
   let observer;
+  const downTotalElement = document.getElementById("gateway-down-total");
+  const upTotalElement = document.getElementById("gateway-up-total");
+  let downRate = 0;
+  let upRate = 0;
+  let downTotal = 0;
+  let upTotal = 0;
+  let sampleTime = 0;
+  let lastCounterPaint = 0;
+  let hasTotals = false;
 
   function createParticle(direction, initial = true) {
     const start = 62;
@@ -23,7 +32,7 @@
     return {
       direction,
       x: initial ? start + Math.random() * (end - start) : direction === 1 ? start : end,
-      y: height * (direction === 1 ? 0.36 : 0.68) + (Math.random() - 0.5) * Math.min(28, height * 0.25),
+      y: height * (direction === 1 ? 0.60 : 0.82) + (Math.random() - 0.5) * Math.min(28, height * 0.25),
       speed: 34 + Math.random() * 72,
       size: 0.7 + Math.random() * 1.25,
       alpha: 0.25 + Math.random() * 0.65,
@@ -50,7 +59,7 @@
   function drawLane(direction) {
     const start = 62;
     const end = Math.max(start + 1, width - 62);
-    const lane = direction === 1 ? 0.36 : 0.68;
+    const lane = direction === 1 ? 0.60 : 0.82;
     const gradient = context.createLinearGradient(start, 0, end, 0);
     gradient.addColorStop(0, "rgba(98,245,255,0)");
     gradient.addColorStop(0.18, direction === 1 ? "rgba(98,245,255,.16)" : "rgba(167,139,255,.10)");
@@ -106,16 +115,36 @@
     }
     context.shadowBlur = 0;
     context.globalCompositeOperation = "source-over";
+    paintCounters(now);
     if (!reducedMotion.matches) frame = requestAnimationFrame(paint);
   }
 
-  function update(down, up) {
-    const downRate = Math.max(0, Number(down) || 0);
-    const upRate = Math.max(0, Number(up) || 0);
+  function formatKb(bytes) {
+    const kilobytes = Math.max(0, Number(bytes) || 0) / 1024;
+    const decimals = kilobytes < 1000 ? 2 : 0;
+    return kilobytes.toLocaleString("en-US", {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+  }
+
+  function paintCounters(now) {
+    if (!hasTotals || now - lastCounterPaint < 80) return;
+    lastCounterPaint = now;
+    const elapsed = Math.max(0, (now - sampleTime) / 1000);
+    downTotalElement.textContent = formatKb(downTotal + downRate * elapsed);
+    upTotalElement.textContent = formatKb(upTotal + upRate * elapsed);
+  }
+
+  function update(down, up, totalDownBytes, totalUpBytes) {
+    downRate = Math.max(0, Number(down) || 0);
+    upRate = Math.max(0, Number(up) || 0);
+    downTotal = Math.max(0, Number(totalDownBytes) || 0);
+    upTotal = Math.max(0, Number(totalUpBytes) || 0);
+    sampleTime = performance.now();
+    lastCounterPaint = 0;
+    hasTotals = true;
     const megabits = (downRate + upRate) * 8 / 1e6;
     targetActivity = Math.min(1, 0.12 + Math.log10(1 + megabits) / 3);
     downActivity = downRate + upRate > 0 ? downRate / (downRate + upRate) : 0.5;
-    if (reducedMotion.matches) paint(performance.now());
+    if (reducedMotion.matches) paint(sampleTime);
   }
 
   window.nexusFlowUpdate = update;

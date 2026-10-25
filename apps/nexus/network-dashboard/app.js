@@ -144,9 +144,7 @@ function renderGateway(rows, totalRows) {
   animateNumber("gateway.down", $("gateway-down"), down, rateText);
   animateNumber("gateway.up", $("gateway-up"), up, rateText);
   animateNumber("gateway.total", $("gateway-history"), totalDown + totalUp, bytesText);
-  animateNumber("gateway.total.down", $("gateway-down-total"), totalDown, v => `累计 ${bytesText(v)}`);
-  animateNumber("gateway.total.up", $("gateway-up-total"), totalUp, v => `累计 ${bytesText(v)}`);
-  window.nexusFlowUpdate?.(down, up);
+  window.nexusFlowUpdate?.(down, up, totalDown, totalUp);
 }
 
 function renderApThroughput(rows, totalRows) {
