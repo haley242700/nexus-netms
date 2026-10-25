@@ -11,6 +11,9 @@ assert(page.includes("<span>网络健康度</span>") && page.includes("<span>无
 assert(page.includes('id="quality-score"') && page.includes('id="quality-ring"'));
 assert(page.includes('data-score-kind="health"') && page.includes('data-score-kind="quality"'), "两个圆环都必须可点击");
 assert(page.includes('id="score-modal"') && page.includes('id="score-detail-rows"'), "缺少评分明细弹窗");
+assert(styles.includes("width: min(520px,100%)"), "弹窗必须使用紧凑宽度");
+assert(styles.includes("rgba(29,40,63,.70)") && styles.includes("blur(28px)"), "弹窗必须使用 70% 毛玻璃背景");
+assert(styles.includes(".score-modal.is-open") && source.includes("setTimeout(hide, 220)"), "弹窗必须支持渐入渐出");
 assert(page.includes('id="flow-canvas"'));
 assert(page.includes('class="flow-node-meter wan-meter"><span>上行总量'));
 assert(page.includes('class="flow-node-meter home-meter"><span>下行总量'));

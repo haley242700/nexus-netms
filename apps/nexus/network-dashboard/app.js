@@ -311,6 +311,7 @@ let pageActive = true;
 let latestScoreDetails = {};
 let openScoreKind = null;
 let scoreTrigger = null;
+let scoreCloseTimer;
 
 function renderScoreDetails(kind) {
   const details = latestScoreDetails[kind];
@@ -331,19 +332,31 @@ function openScoreDetails(kind, trigger) {
     notify("评分数据尚未加载，请稍候");
     return;
   }
+  clearTimeout(scoreCloseTimer);
   openScoreKind = kind;
   scoreTrigger = trigger;
   renderScoreDetails(kind);
-  $("score-modal").hidden = false;
+  const modal = $("score-modal");
+  modal.hidden = false;
   document.body.classList.add("score-modal-open");
+  requestAnimationFrame(() => {
+    if (openScoreKind) modal.classList.add("is-open");
+  });
   $("score-close").focus();
 }
 
-function closeScoreDetails(restoreFocus = true) {
+function closeScoreDetails(restoreFocus = true, immediate = false) {
+  clearTimeout(scoreCloseTimer);
   const modal = $("score-modal");
-  if (modal) modal.hidden = true;
-  document.body.classList.remove("score-modal-open");
   openScoreKind = null;
+  document.body.classList.remove("score-modal-open");
+  if (modal) {
+    modal.classList.remove("is-open");
+    const hide = () => { if (!openScoreKind) modal.hidden = true; };
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (immediate || reduced) hide();
+    else scoreCloseTimer = setTimeout(hide, 220);
+  }
   if (restoreFocus) scoreTrigger?.focus();
   scoreTrigger = null;
 }
@@ -451,7 +464,7 @@ window.nexusPageCleanup = () => {
   pageActive = false;
   clearInterval(clockTimer);
   clearInterval(refreshTimer);
-  closeScoreDetails(false);
+  closeScoreDetails(false, true);
   document.removeEventListener("visibilitychange", handleVisibility);
   document.removeEventListener("click", handleScoreClick);
   document.removeEventListener("keydown", handleScoreKey);
