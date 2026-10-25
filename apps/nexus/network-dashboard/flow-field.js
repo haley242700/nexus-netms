@@ -125,20 +125,31 @@
     return kilobytes.toLocaleString("en-US", {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
   }
 
+  function estimatedTotal(anchor, rate, now) {
+    return anchor + rate * Math.max(0, (now - sampleTime) / 1000);
+  }
+
+  function nextTotalAnchor(actual, estimated) {
+    return Math.max(Math.max(0, Number(actual) || 0), Math.max(0, Number(estimated) || 0));
+  }
+
   function paintCounters(now) {
     if (!hasTotals || now - lastCounterPaint < 80) return;
     lastCounterPaint = now;
-    const elapsed = Math.max(0, (now - sampleTime) / 1000);
-    downTotalElement.textContent = formatKb(downTotal + downRate * elapsed);
-    upTotalElement.textContent = formatKb(upTotal + upRate * elapsed);
+    downTotalElement.textContent = formatKb(estimatedTotal(downTotal, downRate, now));
+    upTotalElement.textContent = formatKb(estimatedTotal(upTotal, upRate, now));
   }
 
   function update(down, up, totalDownBytes, totalUpBytes) {
+    const now = performance.now();
+    const estimatedDown = hasTotals ? estimatedTotal(downTotal, downRate, now) : 0;
+    const estimatedUp = hasTotals ? estimatedTotal(upTotal, upRate, now) : 0;
     downRate = Math.max(0, Number(down) || 0);
     upRate = Math.max(0, Number(up) || 0);
-    downTotal = Math.max(0, Number(totalDownBytes) || 0);
-    upTotal = Math.max(0, Number(totalUpBytes) || 0);
-    sampleTime = performance.now();
+    // 校准只能向前：样本滞后、计数器重置或推算超前都不会让屏幕数字倒退。
+    downTotal = nextTotalAnchor(totalDownBytes, estimatedDown);
+    upTotal = nextTotalAnchor(totalUpBytes, estimatedUp);
+    sampleTime = now;
     lastCounterPaint = 0;
     hasTotals = true;
     const megabits = (downRate + upRate) * 8 / 1e6;

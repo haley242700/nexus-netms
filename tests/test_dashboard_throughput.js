@@ -60,6 +60,12 @@ assert.strictEqual(elements["gateway-history"].textContent, "1.50 GB");
 assert.deepStrictEqual(flowUpdates.at(-1), {down: 12500000, up: 1250000, totalDown: 1073741824, totalUp: 536870912});
 assert(flowSource.includes("paintCounters(now)"));
 assert(flowSource.includes("formatKb"));
+const anchorSource = flowSource.match(/function nextTotalAnchor\(actual, estimated\) \{[\s\S]*?\n  \}/)?.[0];
+assert(anchorSource, "缺少单调不减校准函数");
+const nextTotalAnchor = new Function(`${anchorSource}; return nextTotalAnchor;`)();
+assert.strictEqual(nextTotalAnchor(100, 120), 120, "滞后样本不得让数字倒退");
+assert.strictEqual(nextTotalAnchor(130, 120), 130, "实际值领先时应向前校准");
+assert.strictEqual(nextTotalAnchor(0, 120), 120, "计数器重置不得让数字倒退");
 
 context.renderApThroughput([
   {metric: {ap: "一楼主卧AP", direction: "up"}, value: [0, "1000000"]},
