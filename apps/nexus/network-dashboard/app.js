@@ -125,9 +125,24 @@ function drawLatency(series) {
 
 const AP_ORDER = ["一楼主卧AP", "一楼北卧AP", "一楼客厅AP", "负一客厅AP", "负一卧室AP", "负一电脑房AP"];
 
+function rssiExperienceScore(rssi) {
+  const anchors = [[-40,100],[-50,97],[-60,90],[-67,75],[-75,40],[-85,0]];
+  const signal = Number(rssi);
+  if (!Number.isFinite(signal)) return 0;
+  if (signal >= anchors[0][0]) return 100;
+  for (let index = 1; index < anchors.length; index++) {
+    const [weakRssi, weakScore] = anchors[index];
+    if (signal >= weakRssi) {
+      const [strongRssi, strongScore] = anchors[index - 1];
+      return strongScore - (strongRssi - signal) * (strongScore - weakScore) / (strongRssi - weakRssi);
+    }
+  }
+  return 0;
+}
+
 function wirelessQuality(avgRssi, weak, clientCount, utilRows) {
   const clamp = number => Math.max(0, Math.min(100, number));
-  const rssiScore = clamp((Number(avgRssi) + 90) * 2);
+  const rssiScore = rssiExperienceScore(avgRssi);
   const weakScore = clientCount > 0 ? clamp(100 * (1 - weak / clientCount)) : 100;
   const averageUtil = utilRows.length ? utilRows.reduce((sum, row) => sum + value(row), 0) / utilRows.length : 50;
   const channelScore = 100 - clamp(averageUtil);

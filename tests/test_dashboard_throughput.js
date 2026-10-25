@@ -50,10 +50,16 @@ assert.strictEqual(context.formatRate(12500000).unit, "Mbps");
 assert.strictEqual(Number(context.formatRate(12500000).value), 100);
 assert.strictEqual(context.formatBytes(1073741824).unit, "GB");
 assert.strictEqual(context.bytesText(1536), "1.50 KB");
-assert.strictEqual(context.wirelessQuality(-50, 0, 10, [{value:[0,"10"]},{value:[0,"20"]}]), 87, "无线质量按 50/30/20 加权");
+assert.strictEqual(context.rssiExperienceScore(-50), 97, "-50 dBm 仅扣 3 个信号子分");
+assert.strictEqual(context.rssiExperienceScore(-60), 90);
+assert.strictEqual(context.rssiExperienceScore(-67), 75);
+assert.strictEqual(context.rssiExperienceScore(-75), 40);
+assert.strictEqual(context.rssiExperienceScore(-85), 0);
+assert(Math.abs(context.rssiExperienceScore(-55) - 93.5) < .001, "锚点之间应线性过渡");
+assert.strictEqual(context.wirelessQuality(-50, 0, 10, [{value:[0,"10"]},{value:[0,"20"]}]), 96, "无线质量按 50/30/20 加权");
 assert.strictEqual(context.wirelessQuality(-40, 0, 10, [{value:[0,"0"]}]), 100);
 assert.strictEqual(context.wirelessQuality(-90, 10, 10, [{value:[0,"100"]}]), 0);
-assert.strictEqual(context.wirelessQuality(-70, 2, 10, [{value:[0,"50"]}]), 54);
+assert.strictEqual(context.wirelessQuality(-70, 2, 10, [{value:[0,"50"]}]), 65);
 assert(source.includes("setInterval(refresh, REFRESH_INTERVAL)"));
 
 context.renderGateway([
