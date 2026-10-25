@@ -185,7 +185,7 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
 @media (min-width: 2400px) {
   .shell { width: calc(100% - 32px); zoom: 1.5; }
 }
-@media (max-width: 1050px) { .health-visual { display: none; }.traffic-dashboard { grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); }.ap-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.span-8,.span-4,.span-7,.span-5 { grid-column: span 12; }.span-4 { grid-row: auto; }.latency-chart { height: 210px; } }
+@media (max-width: 1050px) { .health-visual { flex-basis: 160px; height: 160px; margin-right: 0; }.health-ring { width: 140px; height: 140px; }.health-number strong { font-size: 38px; }.traffic-dashboard { grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); }.ap-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.span-8,.span-4,.span-7,.span-5 { grid-column: span 12; }.span-4 { grid-row: auto; }.latency-chart { height: 210px; } }
 @media (max-width: 720px) {
   .shell { width: min(100% - 24px, 600px); padding-top: 16px; }.topbar { margin-bottom: 16px; }.brand-mark { width: 34px; height: 34px; padding: 8px; }.brand strong { font-size: 13px; letter-spacing: .1em; }.brand small { display: none; }.topbar-right { gap: 8px; }#clock { display: none; }.topbar .live-pill { display: none; }.main-nav a { padding: 6px; font-size: 8px; }
   .hero { min-height: 0; padding: 12px; border-radius: 18px; }.traffic-dashboard { grid-template-columns: minmax(0,1fr); gap: 8px; }.traffic-block { padding: 11px; border-radius: 12px; }.traffic-title { font-size: 6px; letter-spacing: .07em; }.traffic-title > b { font-size: 6px; }.gateway-live { grid-column: 1/-1; grid-row: auto; }.flow-overview { gap: 10px; margin-top: 14px; }.flow-kicker { font-size: 6px; }.gateway-total { margin-top: 6px; gap: 6px; }.gateway-total strong { font-size: 36px; }.gateway-total > span { font-size: 8px; }.gateway-caption { font-size: 7px; }.gateway-history span { font-size: 8px; }.gateway-history span small { font-size: 5px; }.gateway-history strong { font-size: 15px; }.flow-stage { min-height: 112px; height: 112px; margin: 12px 0; }.flow-node { width: 42px; height: 42px; border-radius: 13px; }.flow-node strong { font-size: 8px; }.flow-node small { font-size: 4px; }.flow-node-meter > span { font-size: 5px; }.flow-node-meter strong { font-size: 8px; }.flow-node-meter small { font-size: 5px; }.gateway-directions { gap: 6px; }.flow-channel { grid-template-columns: 20px minmax(0,1fr); gap: 6px; padding: 7px; }.flow-channel-icon { width: 20px; height: 20px; font-size: 11px; }.flow-channel div small { font-size: 5px; }.flow-channel b { font-size: 9px; }.flow-channel em { grid-column: 2; font-size: 6px; }.ap-throughput { grid-column: 1/-1; grid-row: auto; }.ap-throughput-list { gap: 6px; margin-top: 10px; }.ap-rate { padding: 8px; }.ap-rate span { font-size: 7px; }.ap-rate strong { font-size: 9px; }
@@ -194,4 +194,12 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
   .latency-chart { height: 170px; }.client-row { grid-template-columns: minmax(95px,1.3fr) minmax(65px,1fr) 51px; gap: 9px; }.client-name strong { font-size: 10px; }.channel-row { grid-template-columns: minmax(82px,1fr) 36px minmax(55px,1fr) 30px; gap: 7px; }footer { flex-wrap: wrap; font-size: 7px; padding-bottom: 12px; }footer span:nth-child(2) { display: none; }
 }
 @media (max-width: 380px) { .health-visual { flex-basis: 105px; margin-right: -13px; }.hero { padding-left: 17px; }.hero h1 { font-size: 30px; }.hero-meta span:last-child { display: none; }.kpi { padding: 13px; }.ap-grid { grid-template-columns: 1fr; } }
+@media (max-width: 720px) {
+  .hero { flex-direction: column; }
+  .health-visual { flex: 0 0 106px; width: 106px; height: 106px; margin: 4px auto 0; }
+  .health-ring { width: 96px; height: 96px; }
+  .health-number strong { font-size: 30px; }
+  .health-number span { font-size: 5px; margin-top: 5px; }
+  .health-number small { font-size: 7px; margin-top: 4px; }
+}
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; } }
