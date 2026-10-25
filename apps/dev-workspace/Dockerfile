@@ -11,7 +11,8 @@ RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         docker.io \
-        docker-compose-v2 \
+        docker-cli \
+        docker-compose \
         git \
         nodejs \
         npm \
@@ -20,4 +21,8 @@ RUN apt-get update \
         python3-pip \
         python3-venv \
         rsync \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /usr/local/lib/docker/cli-plugins \
+    && ln -sf /usr/bin/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
+
+USER coder
