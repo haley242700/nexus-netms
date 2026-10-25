@@ -5,8 +5,10 @@ REPO="${SPEEDTEST_REPO:-/workspace/SpeedTest}"
 TARGET="${NEXUS_DEPLOY_DIR:-/volume1/docker/nexus}"
 
 cd "$REPO"
-python3 manage.py test
-python3 manage.py package nexus
+PYTHON="${SPEEDTEST_PYTHON:-$REPO/.venv/bin/python}"
+[ -x "$PYTHON" ] || PYTHON=python3
+"$PYTHON" manage.py test
+"$PYTHON" manage.py package nexus
 
 for name in \
   Dockerfile requirements.txt .dockerignore docker-compose.yaml \
