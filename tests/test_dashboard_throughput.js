@@ -9,6 +9,8 @@ assert(!styles.includes(".health-visual { display: none; }"), "窄屏不得隐�
 assert(styles.includes(".hero { flex-direction: column; }"));
 assert(page.includes("<span>网络健康度</span>") && page.includes("<span>无线质量分</span>"), "双圆环必须使用醒目的中文名称");
 assert(page.includes('id="quality-score"') && page.includes('id="quality-ring"'));
+assert(page.includes('data-score-kind="health"') && page.includes('data-score-kind="quality"'), "两个圆环都必须可点击");
+assert(page.includes('id="score-modal"') && page.includes('id="score-detail-rows"'), "缺少评分明细弹窗");
 assert(page.includes('id="flow-canvas"'));
 assert(page.includes('class="flow-node-meter wan-meter"><span>上行总量'));
 assert(page.includes('class="flow-node-meter home-meter"><span>下行总量'));
@@ -40,6 +42,7 @@ const context = {
 };
 context.$ = context.document.getElementById;
 context.value = row => Number(row.value[1]);
+context.round = (v, n = 1) => Number.isFinite(v) ? v.toFixed(n) : "--";
 context.esc = value => String(value ?? "");
 vm.createContext(context);
 vm.runInContext(source.slice(source.indexOf("const REFRESH_INTERVAL"), source.indexOf("let refreshing")), context);
@@ -60,6 +63,17 @@ assert.strictEqual(context.wirelessQuality(-50, 0, 10, [{value:[0,"10"]},{value:
 assert.strictEqual(context.wirelessQuality(-40, 0, 10, [{value:[0,"0"]}]), 100);
 assert.strictEqual(context.wirelessQuality(-90, 10, 10, [{value:[0,"100"]}]), 0);
 assert.strictEqual(context.wirelessQuality(-70, 2, 10, [{value:[0,"50"]}]), 65);
+const healthDetails = context.networkHealthDetails(6, 6, true, [{value:[0,"1"]}], 0);
+assert.strictEqual(healthDetails.score, 100);
+assert.strictEqual(healthDetails.metrics.length, 4, "健康度明细包含三项得分和弱信号扣分");
+assert.strictEqual(healthDetails.metrics[0].contribution, 65);
+assert.strictEqual(context.networkHealthDetails(5, 6, false, [{value:[0,"25"]}], 2).score, 55);
+const qualityDetails = context.wirelessQualityDetails(-50, 0, 10, [{value:[0,"10"]},{value:[0,"20"]}]);
+assert.strictEqual(qualityDetails.score, 96);
+assert.strictEqual(qualityDetails.metrics.length, 3);
+assert.strictEqual(qualityDetails.metrics[0].contribution, 48.5);
+assert.strictEqual(qualityDetails.metrics[1].contribution, 30);
+assert.strictEqual(qualityDetails.metrics[2].contribution, 17);
 assert(source.includes("setInterval(refresh, REFRESH_INTERVAL)"));
 
 context.renderGateway([

@@ -140,13 +140,46 @@ function rssiExperienceScore(rssi) {
   return 0;
 }
 
-function wirelessQuality(avgRssi, weak, clientCount, utilRows) {
+function networkHealthDetails(online, apTotal, collector, pings, weak) {
+  const onlineScore = apTotal ? online / apTotal * 100 : 0;
+  const collectorScore = collector ? 100 : 0;
+  const latencyScore = pings.every(row => value(row) < 20) ? 100 : 100 / 3;
+  const averagePing = pings.length ? pings.reduce((sum,row) => sum + value(row), 0) / pings.length : 0;
+  const score = Math.max(0, Math.min(100, Math.round(onlineScore * .65 + collectorScore * .2 + latencyScore * .15 - weak * 2)));
+  return {
+    title: "网络健康度", score,
+    label: score >= 95 ? "运行卓越" : score >= 85 ? "运行良好" : "需要关注",
+    formula: "AP 在线率 × 65% + 采集状态 × 20% + 延迟达标 × 15% − 弱信号终端数 × 2，最终限制在 0–100 分。",
+    metrics: [
+      {name:"AP 在线率", value:`${online} / ${apTotal} 台在线`, weight:"65%", score:onlineScore, contribution:onlineScore * .65},
+      {name:"采集状态", value:collector ? "采集正常" : "采集异常或停滞", weight:"20%", score:collectorScore, contribution:collectorScore * .2},
+      {name:"延迟达标", value:`平均 ${round(averagePing,2)} ms · 全部低于 20 ms 得满分`, weight:"15%", score:latencyScore, contribution:latencyScore * .15},
+      {name:"弱信号扣分", value:`${weak} 台 · 每台扣 2 分`, weight:"扣分项", score:null, contribution:-weak * 2},
+    ],
+  };
+}
+
+function wirelessQualityDetails(avgRssi, weak, clientCount, utilRows) {
   const clamp = number => Math.max(0, Math.min(100, number));
   const rssiScore = rssiExperienceScore(avgRssi);
   const weakScore = clientCount > 0 ? clamp(100 * (1 - weak / clientCount)) : 100;
   const averageUtil = utilRows.length ? utilRows.reduce((sum, row) => sum + value(row), 0) / utilRows.length : 50;
   const channelScore = 100 - clamp(averageUtil);
-  return Math.round(rssiScore * .5 + weakScore * .3 + channelScore * .2);
+  const score = Math.round(rssiScore * .5 + weakScore * .3 + channelScore * .2);
+  return {
+    title: "无线质量分", score,
+    label: score >= 90 ? "体验卓越" : score >= 80 ? "体验良好" : score >= 65 ? "体验一般" : "需要优化",
+    formula: "信号子分 × 50% + 弱信号占比子分 × 30% + 信道空闲子分 × 20%。RSSI 子分采用分段体验曲线。",
+    metrics: [
+      {name:"平均信号质量", value:`${round(avgRssi,2)} dBm · 分段 RSSI 曲线`, weight:"50%", score:rssiScore, contribution:rssiScore * .5},
+      {name:"弱信号终端占比", value:`${weak} / ${clientCount} 台低于 −75 dBm`, weight:"30%", score:weakScore, contribution:weakScore * .3},
+      {name:"信道空闲度", value:`平均利用率 ${round(averageUtil,2)}%`, weight:"20%", score:channelScore, contribution:channelScore * .2},
+    ],
+  };
+}
+
+function wirelessQuality(avgRssi, weak, clientCount, utilRows) {
+  return wirelessQualityDetails(avgRssi, weak, clientCount, utilRows).score;
 }
 
 function sumByDirection(rows, direction) {
@@ -275,6 +308,58 @@ function renderChannels(utilRows, channelRows) {
 }
 
 let pageActive = true;
+let latestScoreDetails = {};
+let openScoreKind = null;
+let scoreTrigger = null;
+
+function renderScoreDetails(kind) {
+  const details = latestScoreDetails[kind];
+  if (!details) return;
+  $("score-detail-title").textContent = details.title;
+  $("score-detail-score").textContent = details.score;
+  $("score-detail-label").textContent = details.label;
+  $("score-detail-formula").textContent = details.formula;
+  $("score-detail-rows").innerHTML = details.metrics.map(metric => {
+    const contribution = Number(metric.contribution);
+    const contributionText = `${contribution > 0 ? "+" : ""}${round(contribution,1)}`;
+    return `<div class="score-metric"><div class="score-metric-name"><strong>${esc(metric.name)}</strong><span>${esc(metric.value)}</span></div><span class="score-metric-weight">${metric.weight === "扣分项" ? "扣分项" : `权重 ${esc(metric.weight)}`}</span><span class="score-metric-score">子得分 ${metric.score === null ? "—" : round(metric.score,1)}</span><strong class="score-metric-contribution ${contribution < 0 ? "negative" : ""}">${contributionText}</strong></div>`;
+  }).join("");
+}
+
+function openScoreDetails(kind, trigger) {
+  if (!latestScoreDetails[kind]) {
+    notify("评分数据尚未加载，请稍候");
+    return;
+  }
+  openScoreKind = kind;
+  scoreTrigger = trigger;
+  renderScoreDetails(kind);
+  $("score-modal").hidden = false;
+  document.body.classList.add("score-modal-open");
+  $("score-close").focus();
+}
+
+function closeScoreDetails(restoreFocus = true) {
+  const modal = $("score-modal");
+  if (modal) modal.hidden = true;
+  document.body.classList.remove("score-modal-open");
+  openScoreKind = null;
+  if (restoreFocus) scoreTrigger?.focus();
+  scoreTrigger = null;
+}
+
+function handleScoreClick(event) {
+  const trigger = event.target.closest?.("[data-score-kind]");
+  if (trigger) {
+    openScoreDetails(trigger.dataset.scoreKind, trigger);
+    return;
+  }
+  if (event.target.closest?.("[data-close-score]") || event.target === $("score-modal")) closeScoreDetails();
+}
+
+function handleScoreKey(event) {
+  if (event.key === "Escape" && openScoreKind) closeScoreDetails();
+}
 
 async function refresh() {
   if (refreshing || !pageActive) return;
@@ -309,8 +394,10 @@ async function refresh() {
     const weak = value(weakRows[0]);
     const clientTotal = value(totalRows[0]);
     const collector = value(collectorRows[0]) === 1;
-    const health = Math.max(0, Math.min(100, Math.round((aps.length ? online / aps.length : 0) * 65 + (collector ? 20 : 0) + (pings.every(r => value(r) < 20) ? 15 : 5) - weak * 2)));
-    const quality = wirelessQuality(avgRssi, weak, clientTotal, utils);
+    const healthDetails = networkHealthDetails(online, aps.length, collector, pings, weak);
+    const qualityDetails = wirelessQualityDetails(avgRssi, weak, clientTotal, utils);
+    const health = healthDetails.score, quality = qualityDetails.score;
+    latestScoreDetails = {health: healthDetails, quality: qualityDetails};
     $("ap-online").textContent = online;
     $("ap-total").textContent = aps.length;
     $("client-total").textContent = Math.round(clientTotal);
@@ -320,11 +407,12 @@ async function refresh() {
     $("avg-ping").textContent = round(avgPing, 1);
     $("weak-count").textContent = Math.round(weak);
     $("health-score").textContent = health;
-    $("health-label").textContent = health >= 95 ? "运行卓越" : health >= 85 ? "运行良好" : "需要关注";
+    $("health-label").textContent = healthDetails.label;
     $("health-ring").style.strokeDashoffset = 351.86 * (1 - health / 100);
     $("quality-score").textContent = quality;
-    $("quality-label").textContent = quality >= 90 ? "体验卓越" : quality >= 80 ? "体验良好" : quality >= 65 ? "体验一般" : "需要优化";
+    $("quality-label").textContent = qualityDetails.label;
     $("quality-ring").style.strokeDashoffset = 351.86 * (1 - quality / 100);
+    if (openScoreKind) renderScoreDetails(openScoreKind);
     $("collector-status").textContent = collector ? "NORMAL" : "STALE";
     $("mlo-count").textContent = Math.round(value(mloRows[0]));
     $("live-text").textContent = "LIVE";
@@ -357,11 +445,16 @@ const clockTimer = setInterval(updateClock, 1000);
 refresh();
 const refreshTimer = setInterval(refresh, REFRESH_INTERVAL);
 document.addEventListener("visibilitychange", handleVisibility);
+document.addEventListener("click", handleScoreClick);
+document.addEventListener("keydown", handleScoreKey);
 window.nexusPageCleanup = () => {
   pageActive = false;
   clearInterval(clockTimer);
   clearInterval(refreshTimer);
+  closeScoreDetails(false);
   document.removeEventListener("visibilitychange", handleVisibility);
+  document.removeEventListener("click", handleScoreClick);
+  document.removeEventListener("keydown", handleScoreKey);
   for (const state of numberAnimations.values()) {
     if (state.frame) cancelAnimationFrame(state.frame);
   }

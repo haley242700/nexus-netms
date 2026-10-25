@@ -105,6 +105,28 @@ h1 em { font-style: normal; color: transparent; background: linear-gradient(100d
 .health-number span { font-size: 10px; font-weight: 550; letter-spacing: .06em; color: #b7c5dc; margin-top: 7px; }
 .health-number small { color: var(--green); font-size: 8px; margin-top: 5px; }
 .quality-number small { color: var(--cyan); }
+button.health-item { padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .2s ease, filter .2s ease; }
+button.health-item:hover { transform: scale(1.035); filter: brightness(1.12); }
+button.health-item:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; }
+body.score-modal-open { overflow: hidden; }
+.score-modal[hidden] { display: none !important; }
+.score-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: rgba(3,7,14,.74); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.score-dialog { width: min(620px,100%); max-height: min(82vh,720px); overflow: auto; padding: 26px; border: 1px solid rgba(98,245,255,.17); border-radius: 22px; background: linear-gradient(145deg,rgba(25,35,56,.98),rgba(8,13,24,.98)); box-shadow: 0 30px 100px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.04); }
+.score-dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.score-dialog-head span { color: var(--cyan); font-size: 9px; letter-spacing: .18em; }
+.score-dialog-head h2 { margin-top: 7px; font-size: 24px; }
+.score-close { width: 34px; height: 34px; flex: 0 0 34px; border: 1px solid rgba(150,180,230,.14); border-radius: 10px; background: rgba(255,255,255,.03); color: #b7c5dc; font-size: 22px; cursor: pointer; }
+.score-close:hover { background: rgba(98,245,255,.08); color: var(--cyan); }
+.score-summary { display: flex; align-items: baseline; gap: 7px; margin: 24px 0 20px; }
+.score-summary strong { color: var(--cyan); font-size: 52px; line-height: 1; font-weight: 540; letter-spacing: -.05em; }
+.score-summary > span { color: var(--muted); font-size: 14px; }.score-summary small { margin-left: auto; color: var(--green); font-size: 12px; }
+.score-detail-rows { display: flex; flex-direction: column; gap: 9px; }
+.score-metric { display: grid; grid-template-columns: minmax(0,1fr) 70px 88px 68px; align-items: center; gap: 12px; padding: 14px; border: 1px solid rgba(130,165,220,.08); border-radius: 12px; background: rgba(100,145,220,.035); }
+.score-metric-name strong { display: block; font-size: 13px; font-weight: 550; }.score-metric-name span { display: block; margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.score-metric-weight,.score-metric-score { color: #91a4c2; font-size: 11px; text-align: right; white-space: nowrap; }
+.score-metric-contribution { color: var(--cyan); font-size: 17px; font-weight: 550; text-align: right; white-space: nowrap; }
+.score-metric-contribution.negative { color: var(--red); }
+.score-formula { margin: 18px 2px 0; color: #6f809d; font-size: 10px; line-height: 1.7; }
 .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); box-shadow: inset 0 1px 0 rgba(255,255,255,.025); overflow: hidden; }
 .kpi { min-width: 0; padding: 13px 18px 12px; min-height: 100px; transition: background .25s ease; }
 .kpi + .kpi { border-left: 1px solid rgba(255,255,255,.055); }
@@ -206,5 +228,14 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
   .health-number strong { font-size: 30px; }
   .health-number span { font-size: 10px; margin-top: 6px; }
   .health-number small { font-size: 8px; margin-top: 4px; }
+  .score-modal { padding: 12px; }
+  .score-dialog { max-height: 88vh; padding: 18px; border-radius: 18px; }
+  .score-dialog-head h2 { font-size: 20px; }
+  .score-summary { margin: 18px 0 16px; }.score-summary strong { font-size: 42px; }.score-summary small { font-size: 10px; }
+  .score-metric { grid-template-columns: minmax(0,1fr) auto; gap: 8px 12px; padding: 12px; }
+  .score-metric-name { grid-column: 1; grid-row: 1; }.score-metric-name strong { font-size: 12px; }.score-metric-name span { font-size: 9px; }
+  .score-metric-weight { grid-column: 1; grid-row: 2; text-align: left; }
+  .score-metric-score { grid-column: 2; grid-row: 2; }
+  .score-metric-contribution { grid-column: 2; grid-row: 1; font-size: 18px; }
 }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; } }

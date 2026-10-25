@@ -56,7 +56,7 @@
           </section>
         </div>
         <div class="health-visual" aria-label="网络健康度与无线质量分">
-          <div class="health-item">
+          <button class="health-item" type="button" data-score-kind="health" aria-label="查看网络健康度评分明细">
             <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
             <svg class="health-ring" viewBox="0 0 140 140" role="img" aria-label="网络健康度">
               <defs><linearGradient id="ring-gradient" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#62f5ff"/><stop offset="1" stop-color="#8b7cff"/></linearGradient></defs>
@@ -64,8 +64,8 @@
               <circle class="ring-value" id="health-ring" cx="70" cy="70" r="56"/>
             </svg>
             <div class="health-number"><strong id="health-score">--</strong><span>网络健康度</span><small id="health-label">正在连接</small></div>
-          </div>
-          <div class="health-item quality-item">
+          </button>
+          <button class="health-item quality-item" type="button" data-score-kind="quality" aria-label="查看无线质量评分明细">
             <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
             <svg class="health-ring" viewBox="0 0 140 140" role="img" aria-label="无线质量分">
               <defs><linearGradient id="quality-gradient" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#55edb0"/><stop offset="1" stop-color="#62f5ff"/></linearGradient></defs>
@@ -73,7 +73,7 @@
               <circle class="ring-value quality-value" id="quality-ring" cx="70" cy="70" r="56"/>
             </svg>
             <div class="health-number quality-number"><strong id="quality-score">--</strong><span>无线质量分</span><small id="quality-label">正在分析</small></div>
-          </div>
+          </button>
         </div>
       </section>
 
@@ -137,6 +137,17 @@
     </main>
 
     <footer><span><i class="status-dot"></i>READ-ONLY TELEMETRY</span><span>PROMETHEUS · REYEE EXPORTER · 3S REFRESH</span></footer>
+  </div>
+  <div class="score-modal" id="score-modal" hidden>
+    <section class="score-dialog" role="dialog" aria-modal="true" aria-labelledby="score-detail-title">
+      <div class="score-dialog-head">
+        <div><span>SCORE BREAKDOWN</span><h2 id="score-detail-title">评分明细</h2></div>
+        <button class="score-close" id="score-close" type="button" data-close-score aria-label="关闭评分明细">×</button>
+      </div>
+      <div class="score-summary"><strong id="score-detail-score">--</strong><span>/ 100</span><small id="score-detail-label">等待数据</small></div>
+      <div class="score-detail-rows" id="score-detail-rows"></div>
+      <p class="score-formula" id="score-detail-formula"></p>
+    </section>
   </div>
   <div class="toast" id="toast" role="status"></div>
   <script src="/navigation.js" defer></script>
