@@ -20,6 +20,8 @@ for name in \
 done
 
 docker compose -f "$TARGET/docker-compose.yaml" up -d --build
+# Python 文件通过只读挂载更新，Compose 配置未变时也必须重启进程。
+docker compose -f "$TARGET/docker-compose.yaml" restart network-dashboard reyee-exporter
 for attempt in $(seq 1 30); do
   if HEALTH=$(curl --fail --silent "$HEALTH_URL"); then
     printf '%s\n' "$HEALTH"

@@ -1,29 +1,46 @@
-"""NEXUS：静态页面、只读 Prometheus 代理和只读事件统计接口。"""
+"""nexus-netms：看板、只读遥测、AP 上下文与 LibreSpeed 内部代理。"""
 import json
 import os
 import sqlite3
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import requests
 
+from ap_lookup import ReyeeClient
+
 PORT = int(os.getenv("DASHBOARD_PORT", "3001"))
 PROMETHEUS = os.getenv("PROMETHEUS_URL", "http://prometheus:9090").rstrip("/")
+LIBRESPEED = os.getenv("LIBRESPEED_URL", "http://librespeed:80").rstrip("/")
 EVENT_DB = os.getenv("EVENT_DB_PATH", "/app/events/events.db")
 ROOT = Path("/app/dashboard")
 PROM_SESSION = requests.Session()
+SPEED_SESSION = requests.Session()
 for scheme in ("http://", "https://"):
-    PROM_SESSION.mount(scheme, requests.adapters.HTTPAdapter(pool_connections=4, pool_maxsize=32))
+    adapter = requests.adapters.HTTPAdapter(pool_connections=4, pool_maxsize=32)
+    PROM_SESSION.mount(scheme, adapter)
+    SPEED_SESSION.mount(scheme, requests.adapters.HTTPAdapter(pool_connections=4, pool_maxsize=32))
+AP_CLIENT = ReyeeClient()
+ENGINE_PREFIX = "/speedtest/engine"
+HOP_BY_HOP = {
+    "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
+    "te", "trailers", "transfer-encoding", "upgrade", "content-encoding", "host",
+}
 FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/events": ("events.html", "text/html; charset=utf-8"),
     "/events.html": ("events.html", "text/html; charset=utf-8"),
+    "/speedtest": ("speedtest.html", "text/html; charset=utf-8"),
+    "/speedtest.html": ("speedtest.html", "text/html; charset=utf-8"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/events.css": ("events.css", "text/css; charset=utf-8"),
+    "/speedtest.css": ("speedtest.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "application/javascript; charset=utf-8"),
     "/events.js": ("events.js", "application/javascript; charset=utf-8"),
+    "/speedtest-app.js": ("speedtest-app.js", "application/javascript; charset=utf-8"),
 }
 
 
@@ -114,6 +131,20 @@ def event_stats():
         db.close()
 
 
+def preferred_client_name(mac):
+    if not mac:
+        return ""
+    try:
+        db = sqlite3.connect(f"file:{EVENT_DB}?mode=ro", uri=True, timeout=2)
+        try:
+            row = db.execute("SELECT name FROM client_names WHERE mac=? COLLATE NOCASE", (mac,)).fetchone()
+            return str(row[0] or "") if row else ""
+        finally:
+            db.close()
+    except (OSError, sqlite3.Error):
+        return ""
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -124,7 +155,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":
+            try:
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
 
     def send_json(self, status, payload):
         self.send_bytes(status, json.dumps(payload, ensure_ascii=False).encode(), "application/json; charset=utf-8")
@@ -142,8 +177,82 @@ class Handler(BaseHTTPRequestHandler):
         except requests.RequestException as exc:
             self.send_json(502, {"status": "error", "error": type(exc).__name__})
 
+    def ap_info(self):
+        if not AP_CLIENT.ready():
+            self.send_json(503, {"connected": False, "note": "AP 查询未配置"})
+            return
+        try:
+            result = AP_CLIENT.lookup_by_ip(self.client_address[0])
+            display_name = preferred_client_name(result.get("clientMac"))
+            if display_name:
+                result["displayName"] = display_name
+            self.send_json(200, result)
+        except Exception:
+            self.send_json(502, {"connected": False, "note": "AP 查询暂时失败"})
+
+    def request_body(self, length):
+        remaining = length
+        while remaining:
+            chunk = self.rfile.read(min(256 * 1024, remaining))
+            if not chunk:
+                break
+            remaining -= len(chunk)
+            yield chunk
+
+    def proxy_speedtest(self):
+        parsed = urlparse(self.path)
+        suffix = parsed.path[len(ENGINE_PREFIX):]
+        url = LIBRESPEED + suffix
+        if parsed.query:
+            url += "?" + parsed.query
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            self.send_json(400, {"error": "invalid content length"})
+            return
+        headers = {
+            key: value for key, value in self.headers.items()
+            if key.lower() not in HOP_BY_HOP and key.lower() not in {"content-length", "accept-encoding"}
+        }
+        client_ip = self.client_address[0]
+        headers["X-Forwarded-For"] = client_ip
+        headers["X-Real-IP"] = client_ip
+        if length:
+            headers["Content-Length"] = str(length)
+        try:
+            response = SPEED_SESSION.request(
+                self.command, url, headers=headers,
+                data=self.request_body(length) if length else None,
+                stream=True, timeout=(8, 120), allow_redirects=False,
+            )
+        except requests.RequestException:
+            self.send_json(502, {"error": "LibreSpeed unavailable"})
+            return
+        try:
+            self.send_response(response.status_code)
+            for key, value in response.headers.items():
+                if key.lower() not in HOP_BY_HOP:
+                    self.send_header(key, value)
+            if "Content-Length" not in response.headers:
+                self.close_connection = True
+                self.send_header("Connection", "close")
+            self.end_headers()
+            if self.command != "HEAD":
+                for chunk in response.iter_content(256 * 1024):
+                    if chunk:
+                        self.wfile.write(chunk)
+        except (BrokenPipeError, ConnectionResetError):
+            self.close_connection = True
+        except requests.RequestException:
+            self.close_connection = True
+        finally:
+            response.close()
+
     def do_GET(self):
         path = urlparse(self.path).path
+        if path.startswith(ENGINE_PREFIX + "/"):
+            self.proxy_speedtest()
+            return
         if path == "/api/query":
             self.proxy_query("query", {"query"})
             return
@@ -156,18 +265,36 @@ class Handler(BaseHTTPRequestHandler):
             except (OSError, sqlite3.Error) as exc:
                 self.send_json(503, {"error": type(exc).__name__})
             return
+        if path == "/api/ap-info":
+            self.ap_info()
+            return
         if path == "/api/health":
             self.send_json(200, {"status": "ok"})
             return
         item = FILES.get(path)
         if not item:
-            self.send_bytes(404, "Not Found".encode(), "text/plain; charset=utf-8")
+            self.send_bytes(404, b"Not Found", "text/plain; charset=utf-8")
             return
         filename, content_type = item
         try:
             self.send_bytes(200, (ROOT / filename).read_bytes(), content_type)
         except OSError:
-            self.send_bytes(500, "Dashboard asset unavailable".encode(), "text/plain; charset=utf-8")
+            self.send_bytes(500, b"Dashboard asset unavailable", "text/plain; charset=utf-8")
+
+    def do_POST(self):
+        path = urlparse(self.path).path
+        if path.startswith(ENGINE_PREFIX + "/"):
+            self.proxy_speedtest()
+            return
+        self.close_connection = True
+        self.send_bytes(404, b"Not Found", "text/plain; charset=utf-8")
+
+    def do_HEAD(self):
+        path = urlparse(self.path).path
+        if path.startswith(ENGINE_PREFIX + "/"):
+            self.proxy_speedtest()
+            return
+        self.send_bytes(404, b"", "text/plain; charset=utf-8")
 
     def log_request(self, code="-", size="-"):
         if isinstance(code, int) and code < 400:
@@ -178,6 +305,13 @@ class Handler(BaseHTTPRequestHandler):
         print(f"[dashboard] {self.client_address[0]} {fmt % args}", flush=True)
 
 
+class QuietServer(ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        if isinstance(sys.exc_info()[1], (BrokenPipeError, ConnectionResetError)):
+            return
+        super().handle_error(request, client_address)
+
+
 if __name__ == "__main__":
-    print(f"[dashboard] NEXUS 已启动 :{PORT}，Prometheus={PROMETHEUS}", flush=True)
-    ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
+    print(f"[dashboard] nexus-netms 已启动 :{PORT}，LibreSpeed={LIBRESPEED}", flush=True)
+    QuietServer(("0.0.0.0", PORT), Handler).serve_forever()

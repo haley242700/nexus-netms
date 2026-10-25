@@ -34,6 +34,14 @@ SpeedTest/
 └── manage.py               # 统一管理入口
 ```
 
+## 页面
+
+- `/`：运行总览，展示网关、AP、终端与信道遥测。
+- `/events`：漫游与异常事件统计。
+- `/speedtest`：统一风格的 LibreSpeed 局域网测速，展示下载、上传、延迟、抖动和当前终端的 AP 上下文。
+
+测速引擎作为 `nexus-librespeed` 内部容器运行，不开放额外主机端口；看板通过 `/speedtest/engine/` 流式转发测速流量。`/api/ap-info` 按访问者真实 IP 只读查询睿易，AP 查询失败不影响测速。
+
 随时查看实际目录：
 
 ```bash

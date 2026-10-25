@@ -16,9 +16,21 @@ def timestamp(text):
     raise AssertionError("缺少最近采集时间戳")
 
 
-for path in ("/", "/events", "/app.js", "/events.js", "/styles.css", "/events.css", "/api/health", "/api/events"):
+for path in (
+    "/", "/events", "/speedtest", "/app.js", "/events.js", "/speedtest-app.js",
+    "/styles.css", "/events.css", "/speedtest.css", "/api/health", "/api/events",
+    "/api/ap-info", "/speedtest/engine/speedtest.js", "/speedtest/engine/speedtest_worker.js",
+    "/speedtest/engine/backend/getIP.php",
+):
     response = session.get(BASE + path, timeout=15)
     assert response.status_code == 200, (path, response.status_code)
+
+speed_page = session.get(BASE + "/speedtest", timeout=15).text
+assert "当前测速环境" in speed_page and 'href="/speedtest"' in speed_page
+ap_info = session.get(BASE + "/api/ap-info", timeout=15).json()
+assert "connected" in ap_info
+engine_ip = session.get(BASE + "/speedtest/engine/backend/getIP.php", timeout=15).json()
+assert engine_ip.get("processedString"), engine_ip
 
 payload = session.get(BASE + "/api/events", timeout=15).json()
 roam = payload["roam"]
@@ -42,7 +54,9 @@ deltas = [round(b - a, 3) for a, b in zip(stamps, stamps[1:])]
 assert len(deltas) >= 3, f"有效采集样本不足：{stamps}"
 assert all(2 <= delta <= 4 for delta in deltas), f"采集周期偏离 3 秒：{deltas}"
 print(json.dumps({
-    "routes_ok": 8,
+    "routes_ok": 15,
+    "speedtest_engine_ok": True,
+    "ap_context_ok": True,
     "roam_events": roam["count"],
     "ap_stats": len(roam["apStats"]),
     "recent_roam_pairs_ok": True,

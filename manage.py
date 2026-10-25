@@ -12,11 +12,13 @@ PYTHON_TESTS = [
     "tests/test_event_store_v1.py",
     "tests/test_dashboard_events_api.py",
     "tests/test_event_migration.py",
+    "tests/test_speedtest_integration.py",
     "tests/nexus_scale_test.py",
 ]
 JS_TESTS = [
     "tests/test_dashboard_pagination.js",
     "tests/test_dashboard_throughput.js",
+    "tests/test_speedtest_page.js",
 ]
 VERIFY_SCRIPTS = [
     "tools/verification/nexus_health_check.py",
@@ -46,7 +48,7 @@ def offline_test(_args):
     for script in PYTHON_TESTS:
         run([sys.executable, script])
     node = shutil.which("node") or "node"
-    for script in ("apps/nexus/network-dashboard/app.js", "apps/nexus/network-dashboard/events.js"):
+    for script in ("apps/nexus/network-dashboard/app.js", "apps/nexus/network-dashboard/events.js", "apps/nexus/network-dashboard/speedtest-app.js"):
         run([node, "--check", script])
     for script in JS_TESTS:
         run([node, script])

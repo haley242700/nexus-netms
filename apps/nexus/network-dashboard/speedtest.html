@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070a12">
+  <base href="/speedtest/engine/">
+  <title>nexus-netms · 网络测速</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/speedtest.css">
+  <script src="/speedtest/engine/speedtest.js" defer></script>
+  <script src="/speedtest-app.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div><div class="grid-overlay"></div>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="nexus-netms 首页"><span class="brand-mark"><i></i><i></i><i></i></span><span><strong>nexus-netms</strong><small>HOME NETWORK</small></span></a>
+      <div class="topbar-right"><nav class="main-nav" aria-label="nexus-netms 页面"><a href="/">运行总览</a><a href="/events">事件统计</a><a class="active" href="/speedtest">网络测速</a></nav><div class="live-pill" id="live-pill"><span class="live-dot"></span><span id="live-text">READY</span></div><time id="clock">--:--:--</time></div>
+    </header>
+
+    <main class="speedtest-main">
+      <section class="speed-hero glass-panel">
+        <div class="speed-copy">
+          <div class="eyebrow"><span></span>NETWORK THROUGHPUT</div>
+          <h1>网络测速<em>实时链路</em></h1>
+          <p>LIBRESPEED ENGINE · LOCAL NAS · AP CONTEXT</p>
+          <div class="speed-stage"><i class="status-dot"></i><span id="test-stage">准备就绪</span></div>
+        </div>
+        <div class="speed-control">
+          <div class="speed-gauge" aria-label="实时测速速率">
+            <div class="speed-orbit orbit-one"></div><div class="speed-orbit orbit-two"></div>
+            <svg viewBox="0 0 128 128" role="img" aria-hidden="true">
+              <defs><linearGradient id="speed-gradient" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#62f5ff"/><stop offset="1" stop-color="#a78bff"/></linearGradient></defs>
+              <circle class="speed-track" cx="64" cy="64" r="54"/>
+              <circle class="speed-progress" id="speed-progress" cx="64" cy="64" r="54"/>
+            </svg>
+            <div class="speed-reading"><strong id="speed-live">--</strong><span id="speed-unit">Mbps</span><small id="speed-phase">READY</small></div>
+          </div>
+          <button class="speed-button" id="speed-toggle" type="button"><span class="button-pulse"></span><span id="speed-toggle-text">开始测速</span></button>
+        </div>
+      </section>
+
+      <section class="kpi-grid speed-kpis" aria-label="测速结果">
+        <article class="kpi cyan"><div class="kpi-top"><span>下载速率</span><span class="kpi-icon">↓</span></div><div class="kpi-value"><strong id="result-download">--</strong><small>Mbps</small></div><div class="kpi-foot"><span>DOWNLOAD</span><span id="download-progress">等待测速</span></div></article>
+        <article class="kpi violet"><div class="kpi-top"><span>上传速率</span><span class="kpi-icon">↑</span></div><div class="kpi-value"><strong id="result-upload">--</strong><small>Mbps</small></div><div class="kpi-foot"><span>UPLOAD</span><span id="upload-progress">等待测速</span></div></article>
+        <article class="kpi blue"><div class="kpi-top"><span>网络延迟</span><span class="kpi-icon">↯</span></div><div class="kpi-value"><strong id="result-ping">--</strong><small>ms</small></div><div class="kpi-foot"><span>LATENCY</span><span>到本地测速服务</span></div></article>
+        <article class="kpi green"><div class="kpi-top"><span>抖动</span><span class="kpi-icon">≈</span></div><div class="kpi-value"><strong id="result-jitter">--</strong><small>ms</small></div><div class="kpi-foot"><span>JITTER</span><span>越小越稳定</span></div></article>
+      </section>
+
+      <div class="content-grid speed-grid">
+        <section class="glass-panel panel span-7">
+          <div class="panel-head"><div><span class="section-index">01</span><h2>当前测速环境</h2></div><button class="ap-refresh" id="ap-refresh" type="button">刷新 AP 信息</button></div>
+          <div class="ap-context-status"><span class="context-indicator" id="context-indicator"></span><strong id="ap-context-title">正在识别测速设备…</strong><small id="ap-context-note">AP 信息仅作辅助，不影响测速</small></div>
+          <div class="ap-context-grid">
+            <div><span>测速设备</span><strong id="context-client">--</strong><small id="context-ip">IP --</small></div>
+            <div><span>接入 AP</span><strong id="context-ap">--</strong><small id="context-ssid">SSID --</small></div>
+            <div><span>频段 / 信道</span><strong id="context-band">--</strong><small id="context-channel">信道 --</small></div>
+            <div><span>无线信号</span><strong id="context-rssi">--</strong><small>RSSI</small></div>
+            <div><span>协商速率</span><strong id="context-rate">--</strong><small>无线链路能力</small></div>
+            <div><span>最近测速</span><strong id="last-test">尚未测速</strong><small id="last-test-ap">AP 信息将在测速前刷新</small></div>
+          </div>
+        </section>
+
+        <section class="glass-panel panel span-5">
+          <div class="panel-head"><div><span class="section-index">02</span><h2>测速说明</h2></div><span class="panel-tag">LOCAL TEST</span></div>
+          <div class="test-facts">
+            <div><span>测速服务器</span><strong>当前 NAS · 内部服务</strong></div>
+            <div><span>测试内容</span><strong>下载、上传、延迟与抖动</strong></div>
+            <div><span>结果口径</span><strong>设备到 NAS 的局域网链路</strong></div>
+            <div><span>AP 数据</span><strong>睿易后台只读查询</strong></div>
+          </div>
+          <p class="test-note">测速会占用局域网带宽，请避免同时进行大文件传输。结果反映当前 AP 和无线环境下的局域网表现，不等同于互联网宽带速率。</p>
+        </section>
+      </div>
+    </main>
+    <footer><span><i class="status-dot"></i>LOCAL SPEEDTEST</span><span>LIBRESPEED · READ-ONLY AP CONTEXT</span></footer>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+</body>
+</html>

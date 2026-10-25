@@ -46,13 +46,21 @@ services:
       - ./events:/app/data
     command: ["python", "/app/reyee_exporter.py"]
 
+  librespeed:
+    image: linuxserver/librespeed:latest
+    container_name: nexus-librespeed
+    restart: unless-stopped
+
   network-dashboard:
     image: nexus-runtime:local
     container_name: network-dashboard
     restart: unless-stopped
+    env_file:
+      - ./secrets/login.env
     environment:
       DASHBOARD_PORT: "3001"
       PROMETHEUS_URL: http://prometheus:9090
+      LIBRESPEED_URL: http://librespeed:80
       EVENT_DB_PATH: /app/events/events.db
     ports:
       - "3002:3001"
@@ -62,6 +70,7 @@ services:
       - ./events:/app/events:ro
     depends_on:
       - prometheus
+      - librespeed
     command: ["python", "/app/dashboard_server.py"]
 
 volumes:
