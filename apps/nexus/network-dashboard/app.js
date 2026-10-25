@@ -143,7 +143,6 @@ function renderGateway(rows, totalRows) {
   animateNumber("gateway.rate", $("gateway-rate"), down + up, v => formatRate(v).value);
   animateNumber("gateway.down", $("gateway-down"), down, rateText);
   animateNumber("gateway.up", $("gateway-up"), up, rateText);
-  animateNumber("gateway.total", $("gateway-history"), totalDown + totalUp, bytesText);
   window.nexusFlowUpdate?.(down, up, totalDown, totalUp);
 }
 

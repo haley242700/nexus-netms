@@ -56,10 +56,12 @@ context.renderGateway([
 ]);
 assert.strictEqual(Number(elements["gateway-rate"].textContent), 110);
 assert(elements["gateway-down"].textContent.includes("100"));
-assert.strictEqual(elements["gateway-history"].textContent, "1.50 GB");
+assert(!source.includes('animateNumber("gateway.total"'), "总累计不得与上下行分开动画");
 assert.deepStrictEqual(flowUpdates.at(-1), {down: 12500000, up: 1250000, totalDown: 1073741824, totalUp: 536870912});
 assert(flowSource.includes("paintCounters(now)"));
 assert(flowSource.includes("formatKb"));
+assert(flowSource.includes('document.getElementById("gateway-history")'));
+assert(flowSource.includes('totalElement.textContent = `${formatKb(estimatedDown + estimatedUp)} KB`;'), "总累计必须同帧显示上下行之和");
 const anchorSource = flowSource.match(/function nextTotalAnchor\(actual, estimated\) \{[\s\S]*?\n  \}/)?.[0];
 assert(anchorSource, "缺少单调不减校准函数");
 const nextTotalAnchor = new Function(`${anchorSource}; return nextTotalAnchor;`)();

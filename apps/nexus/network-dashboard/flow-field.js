@@ -18,6 +18,7 @@
   let observer;
   const downTotalElement = document.getElementById("gateway-down-total");
   const upTotalElement = document.getElementById("gateway-up-total");
+  const totalElement = document.getElementById("gateway-history");
   let downRate = 0;
   let upRate = 0;
   let downTotal = 0;
@@ -136,8 +137,11 @@
   function paintCounters(now) {
     if (!hasTotals || now - lastCounterPaint < 80) return;
     lastCounterPaint = now;
-    downTotalElement.textContent = formatKb(estimatedTotal(downTotal, downRate, now));
-    upTotalElement.textContent = formatKb(estimatedTotal(upTotal, upRate, now));
+    const estimatedDown = estimatedTotal(downTotal, downRate, now);
+    const estimatedUp = estimatedTotal(upTotal, upRate, now);
+    downTotalElement.textContent = formatKb(estimatedDown);
+    upTotalElement.textContent = formatKb(estimatedUp);
+    totalElement.textContent = `${formatKb(estimatedDown + estimatedUp)} KB`;
   }
 
   function update(down, up, totalDownBytes, totalUpBytes) {
