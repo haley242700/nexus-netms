@@ -1,0 +1,24 @@
+name: dev-workspace
+
+services:
+  code-server:
+    build:
+      context: .
+    image: speedtest-dev-workspace:local
+    container_name: code-server
+    restart: unless-stopped
+    env_file:
+      - ./secrets/code-server.env
+    environment:
+      TZ: "Asia/Shanghai"
+    group_add:
+      - "121"
+    ports:
+      - "192.168.110.54:8443:8080"
+    volumes:
+      - ./config:/home/coder/.config
+      - ./workspace:/workspace
+      - ./secrets/ssh:/home/coder/.ssh
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /volume1/docker/nexus:/volume1/docker/nexus
+    command: ["--bind-addr", "0.0.0.0:8080", "--auth", "password", "/workspace/SpeedTest"]

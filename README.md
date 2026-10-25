@@ -15,7 +15,8 @@
 SpeedTest/
 ├── apps/
 │   ├── speedtest-ap/       # LibreSpeed AP 信息集成、登录与只读客户端
-│   └── nexus/              # NEXUS 看板、Exporter、Prometheus 及 Compose
+│   ├── nexus/              # NEXUS 看板、Exporter、Prometheus 及 Compose
+│   └── dev-workspace/      # NAS 浏览器开发环境与一键部署脚本
 ├── tools/
 │   ├── common.py           # 统一路径和配置读取
 │   ├── nas/                # NAS SSH 文件与命令工具
@@ -39,9 +40,25 @@ SpeedTest/
 python manage.py tree
 ```
 
-## PC 环境初始化
+## 开发环境初始化
 
-在项目根目录执行：
+### NAS code-server（主方式）
+
+浏览器打开 `http://192.168.110.54:8443`，登录密码仅保存在 NAS 的 `/volume1/docker/dev-workspace/secrets/code-server.env`。开发容器项目位于 `/volume1/docker/dev-workspace/`，仓库克隆到容器内的 `/workspace/SpeedTest`，与生产目录 `/volume1/docker/nexus/` 分离。
+
+首次克隆后，在 code-server 终端执行：
+
+```bash
+cd /workspace/SpeedTest
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+```
+
+之后使用 `.venv/bin/python manage.py test` 运行测试。验证并部署 NEXUS 时执行 `apps/dev-workspace/deploy-nexus.sh`；脚本先运行测试，再生成干净部署包并重建生产容器，不会覆盖生产密钥或事件数据库。
+
+### PC（可选）
+
+在 PC 项目根目录执行：
 
 ```bash
 python -m venv .venv
