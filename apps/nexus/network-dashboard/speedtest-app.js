@@ -119,8 +119,12 @@ function toggleTest() {
   }
 }
 
+let pageActive = true;
+let apController = null;
+
 engine.onupdate = renderUpdate;
 engine.onend = aborted => {
+  if (!pageActive) return;
   setReady(aborted ? "STOPPED" : "DONE");
   text("test-stage", aborted ? "测速已停止" : "测速完成");
   if (aborted) {
@@ -139,12 +143,14 @@ function setContextValue(id, value, fallback = "--") {
 }
 
 async function refreshApInfo() {
-  if (apLoading) return;
+  if (apLoading || !pageActive) return;
   apLoading = true;
+  apController = new AbortController();
   $("ap-refresh").disabled = true;
   try {
-    const response = await fetch("/api/ap-info", {cache:"no-store"});
+    const response = await fetch("/api/ap-info", {cache:"no-store", signal:apController.signal});
     const data = await response.json();
+    if (!pageActive) return;
     if (!response.ok) throw new Error(data.note || `HTTP ${response.status}`);
     apSnapshot = data;
     const connected = data.connected === true;
@@ -161,21 +167,33 @@ async function refreshApInfo() {
     setContextValue("context-rate", wirelessRate(data.rxRate));
     $("context-rssi").classList.toggle("weak", Number(data.rssi) <= -75);
   } catch (error) {
+    if (!pageActive || error.name === "AbortError") return;
     apSnapshot = null;
     $("context-indicator").className = "context-indicator error";
     text("ap-context-title", "AP 信息暂不可用");
     text("ap-context-note", "查询失败不影响测速，可稍后手动刷新");
   } finally {
     apLoading = false;
-    $("ap-refresh").disabled = false;
+    if (pageActive && $("ap-refresh")) $("ap-refresh").disabled = false;
   }
 }
 
+function handlePageHide(event) {
+  if (!event.persisted && engine.getState() === 3) engine.abort();
+}
 $("speed-toggle").addEventListener("click", toggleTest);
 $("ap-refresh").addEventListener("click", refreshApInfo);
-window.addEventListener("beforeunload", () => { if (engine.getState() === 3) engine.abort(); });
+window.addEventListener("pagehide", handlePageHide);
 setClock();
-setInterval(setClock, 1000);
+const clockTimer = setInterval(setClock, 1000);
 setReady();
 refreshApInfo();
-setInterval(() => { if (engine.getState() !== 3) refreshApInfo(); }, 15000);
+const apTimer = setInterval(() => { if (engine.getState() !== 3) refreshApInfo(); }, 15000);
+window.nexusPageCleanup = () => {
+  pageActive = false;
+  clearInterval(clockTimer);
+  clearInterval(apTimer);
+  apController?.abort();
+  window.removeEventListener("pagehide", handlePageHide);
+  if (engine.getState() === 3) engine.abort();
+};

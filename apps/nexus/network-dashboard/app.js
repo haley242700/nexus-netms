@@ -252,8 +252,10 @@ function renderChannels(utilRows, channelRows) {
   }).join("");
 }
 
+let pageActive = true;
+
 async function refresh() {
-  if (refreshing) return;
+  if (refreshing || !pageActive) return;
   refreshing = true;
   try {
     const [aps, clients, apClients, pings, utils, channels, totalRows, fiveRows, rssiRows, weakRows, mloRows, collectorRows, gatewayTraffic, gatewayTotals, apTraffic, apTotals, topClients, rxRates, clientTraffic, clientTotals, history] = await Promise.all([
@@ -279,6 +281,7 @@ async function refresh() {
       query('reyee_client_traffic_bytes_total'),
       rangeQuery('avg(probe_duration_seconds{job="ap_ping"}) * 1000')
     ]);
+    if (!pageActive) return;
     const online = aps.filter(r => value(r) === 1).length;
     const avgPing = pings.length ? pings.reduce((s,r) => s + value(r), 0) / pings.length : 0;
     const avgRssi = value(rssiRows[0]);
@@ -308,6 +311,7 @@ async function refresh() {
     renderChannels(utils, channels);
     drawLatency(history);
   } catch (error) {
+    if (!pageActive) return;
     console.error(error);
     $("live-text").textContent = "STALE";
     $("live-pill").classList.add("error");
@@ -320,8 +324,21 @@ async function refresh() {
 function updateClock() {
   $("clock").textContent = new Date().toLocaleTimeString("zh-CN", {hour12: false});
 }
+function handleVisibility() {
+  if (!document.hidden) refresh();
+}
 updateClock();
-setInterval(updateClock, 1000);
+const clockTimer = setInterval(updateClock, 1000);
 refresh();
-setInterval(refresh, REFRESH_INTERVAL);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+const refreshTimer = setInterval(refresh, REFRESH_INTERVAL);
+document.addEventListener("visibilitychange", handleVisibility);
+window.nexusPageCleanup = () => {
+  pageActive = false;
+  clearInterval(clockTimer);
+  clearInterval(refreshTimer);
+  document.removeEventListener("visibilitychange", handleVisibility);
+  for (const state of numberAnimations.values()) {
+    if (state.frame) cancelAnimationFrame(state.frame);
+  }
+  numberAnimations.clear();
+};

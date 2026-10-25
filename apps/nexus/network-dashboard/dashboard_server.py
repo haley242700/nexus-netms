@@ -1,4 +1,5 @@
 """nexus-netms：看板、只读遥测、AP 上下文与 LibreSpeed 内部代理。"""
+import hashlib
 import json
 import os
 import sqlite3
@@ -39,6 +40,7 @@ FILES = {
     "/events.css": ("events.css", "text/css; charset=utf-8"),
     "/speedtest.css": ("speedtest.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "application/javascript; charset=utf-8"),
+    "/navigation.js": ("navigation.js", "application/javascript; charset=utf-8"),
     "/events.js": ("events.js", "application/javascript; charset=utf-8"),
     "/speedtest-app.js": ("speedtest-app.js", "application/javascript; charset=utf-8"),
 }
@@ -148,11 +150,13 @@ def preferred_client_name(mac):
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
-    def send_bytes(self, status, body, content_type):
+    def send_bytes(self, status, body, content_type, cache_control="no-store", etag=None):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Cache-Control", cache_control)
+        if etag:
+            self.send_header("ETag", etag)
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         if self.command != "HEAD":
@@ -277,7 +281,12 @@ class Handler(BaseHTTPRequestHandler):
             return
         filename, content_type = item
         try:
-            self.send_bytes(200, (ROOT / filename).read_bytes(), content_type)
+            body = (ROOT / filename).read_bytes()
+            etag = f'"sha256-{hashlib.sha256(body).hexdigest()[:24]}"'
+            if self.headers.get("If-None-Match") == etag:
+                self.send_bytes(304, b"", content_type, "no-cache", etag)
+                return
+            self.send_bytes(200, body, content_type, "no-cache", etag)
         except OSError:
             self.send_bytes(500, b"Dashboard asset unavailable", "text/plain; charset=utf-8")
 

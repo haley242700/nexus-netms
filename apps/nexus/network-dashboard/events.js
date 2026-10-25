@@ -78,14 +78,19 @@ function render(data) {
   $("live-pill").classList.remove("error");
 }
 
+let pageActive = true;
+
 async function refreshEvents() {
-  if (refreshing) return;
+  if (refreshing || !pageActive) return;
   refreshing = true;
   try {
     const response = await fetch("/api/events", {cache:"no-store"});
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    render(await response.json());
+    const data = await response.json();
+    if (!pageActive) return;
+    render(data);
   } catch (error) {
+    if (!pageActive) return;
     console.error(error);
     $("live-text").textContent = "STALE";
     $("live-pill").classList.add("error");
@@ -98,8 +103,17 @@ async function refreshEvents() {
 function updateClock() {
   $("clock").textContent = new Date().toLocaleTimeString("zh-CN", {hour12:false});
 }
+function handleVisibility() {
+  if (!document.hidden) refreshEvents();
+}
 updateClock();
-setInterval(updateClock, 1000);
+const clockTimer = setInterval(updateClock, 1000);
 refreshEvents();
-setInterval(refreshEvents, 3000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshEvents(); });
+const refreshTimer = setInterval(refreshEvents, 3000);
+document.addEventListener("visibilitychange", handleVisibility);
+window.nexusPageCleanup = () => {
+  pageActive = false;
+  clearInterval(clockTimer);
+  clearInterval(refreshTimer);
+  document.removeEventListener("visibilitychange", handleVisibility);
+};

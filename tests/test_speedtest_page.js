@@ -13,6 +13,16 @@ for (const [name, active] of pages) {
   }
   if (!html.includes(active)) throw new Error(`${name} 当前页导航状态错误`);
   if (!html.includes("nexus-netms")) throw new Error(`${name} 缺少统一品牌`);
+  if (!html.includes('src="/navigation.js"')) throw new Error(`${name} 缺少无刷新导航`);
+}
+
+const navigation = fs.readFileSync(`${dashboard}/navigation.js`, "utf8");
+for (const token of ["nexusPageCleanup", "history.pushState", 'window.addEventListener("popstate"', 'script.type = "module"', "warmPage"]) {
+  if (!navigation.includes(token)) throw new Error(`无刷新导航缺少 ${token}`);
+}
+for (const name of ["app.js", "events.js", "speedtest-app.js"]) {
+  const script = fs.readFileSync(`${dashboard}/${name}`, "utf8");
+  if (!script.includes("window.nexusPageCleanup")) throw new Error(`${name} 缺少离开页面清理`);
 }
 
 const page = fs.readFileSync(`${dashboard}/speedtest.html`, "utf8");

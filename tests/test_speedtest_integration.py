@@ -85,9 +85,12 @@ base = f"http://127.0.0.1:{dashboard.server_address[1]}"
 client = requests.Session()
 client.trust_env = False
 try:
-    for path in ("/speedtest", "/speedtest.css", "/speedtest-app.js"):
+    for path in ("/speedtest", "/speedtest.css", "/speedtest-app.js", "/navigation.js"):
         response = client.get(base + path, timeout=5)
         assert response.status_code == 200, (path, response.status_code)
+        assert response.headers["Cache-Control"] == "no-cache"
+        cached = client.get(base + path, headers={"If-None-Match": response.headers["ETag"]}, timeout=5)
+        assert cached.status_code == 304 and not cached.content, (path, cached.status_code)
     page = client.get(base + "/speedtest", timeout=5).text
     assert 'href="/speedtest"' in page and "当前测速环境" in page
 
