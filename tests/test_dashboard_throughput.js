@@ -7,7 +7,8 @@ const page = fs.readFileSync("apps/nexus/network-dashboard/index.html", "utf8");
 const styles = fs.readFileSync("apps/nexus/network-dashboard/styles.css", "utf8");
 assert(!styles.includes(".health-visual { display: none; }"), "窄屏不得隐藏网络健康度");
 assert(styles.includes(".hero { flex-direction: column; }"));
-assert(styles.includes("width: 106px; height: 106px; margin: 4px auto 0;"), "手机端健康度应独立居中显示");
+assert(page.includes("<span>网络健康度</span>") && page.includes("<span>无线质量分</span>"), "双圆环必须使用醒目的中文名称");
+assert(page.includes('id="quality-score"') && page.includes('id="quality-ring"'));
 assert(page.includes('id="flow-canvas"'));
 assert(page.includes('class="flow-node-meter wan-meter"><span>上行总量'));
 assert(page.includes('class="flow-node-meter home-meter"><span>下行总量'));
@@ -49,6 +50,10 @@ assert.strictEqual(context.formatRate(12500000).unit, "Mbps");
 assert.strictEqual(Number(context.formatRate(12500000).value), 100);
 assert.strictEqual(context.formatBytes(1073741824).unit, "GB");
 assert.strictEqual(context.bytesText(1536), "1.50 KB");
+assert.strictEqual(context.wirelessQuality(-50, 0, 10, [{value:[0,"10"]},{value:[0,"20"]}]), 87, "无线质量按 50/30/20 加权");
+assert.strictEqual(context.wirelessQuality(-40, 0, 10, [{value:[0,"0"]}]), 100);
+assert.strictEqual(context.wirelessQuality(-90, 10, 10, [{value:[0,"100"]}]), 0);
+assert.strictEqual(context.wirelessQuality(-70, 2, 10, [{value:[0,"50"]}]), 54);
 assert(source.includes("setInterval(refresh, REFRESH_INTERVAL)"));
 
 context.renderGateway([

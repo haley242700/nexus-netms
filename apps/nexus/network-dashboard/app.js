@@ -125,6 +125,15 @@ function drawLatency(series) {
 
 const AP_ORDER = ["一楼主卧AP", "一楼北卧AP", "一楼客厅AP", "负一客厅AP", "负一卧室AP", "负一电脑房AP"];
 
+function wirelessQuality(avgRssi, weak, clientCount, utilRows) {
+  const clamp = number => Math.max(0, Math.min(100, number));
+  const rssiScore = clamp((Number(avgRssi) + 90) * 2);
+  const weakScore = clientCount > 0 ? clamp(100 * (1 - weak / clientCount)) : 100;
+  const averageUtil = utilRows.length ? utilRows.reduce((sum, row) => sum + value(row), 0) / utilRows.length : 50;
+  const channelScore = 100 - clamp(averageUtil);
+  return Math.round(rssiScore * .5 + weakScore * .3 + channelScore * .2);
+}
+
 function sumByDirection(rows, direction) {
   return rows.filter(row => row.metric.direction === direction).reduce((sum,row) => sum + value(row), 0);
 }
@@ -283,11 +292,13 @@ async function refresh() {
     const avgPing = pings.length ? pings.reduce((s,r) => s + value(r), 0) / pings.length : 0;
     const avgRssi = value(rssiRows[0]);
     const weak = value(weakRows[0]);
+    const clientTotal = value(totalRows[0]);
     const collector = value(collectorRows[0]) === 1;
     const health = Math.max(0, Math.min(100, Math.round((aps.length ? online / aps.length : 0) * 65 + (collector ? 20 : 0) + (pings.every(r => value(r) < 20) ? 15 : 5) - weak * 2)));
+    const quality = wirelessQuality(avgRssi, weak, clientTotal, utils);
     $("ap-online").textContent = online;
     $("ap-total").textContent = aps.length;
-    $("client-total").textContent = Math.round(value(totalRows[0]));
+    $("client-total").textContent = Math.round(clientTotal);
     $("five-g").textContent = Math.round(value(fiveRows[0]));
     $("avg-rssi").textContent = Math.round(avgRssi);
     $("signal-quality").textContent = avgRssi > -60 ? "信号优秀" : avgRssi > -70 ? "信号良好" : "值得关注";
@@ -296,6 +307,9 @@ async function refresh() {
     $("health-score").textContent = health;
     $("health-label").textContent = health >= 95 ? "运行卓越" : health >= 85 ? "运行良好" : "需要关注";
     $("health-ring").style.strokeDashoffset = 351.86 * (1 - health / 100);
+    $("quality-score").textContent = quality;
+    $("quality-label").textContent = quality >= 90 ? "体验卓越" : quality >= 80 ? "体验良好" : quality >= 65 ? "体验一般" : "需要优化";
+    $("quality-ring").style.strokeDashoffset = 351.86 * (1 - quality / 100);
     $("collector-status").textContent = collector ? "NORMAL" : "STALE";
     $("mlo-count").textContent = Math.round(value(mloRows[0]));
     $("live-text").textContent = "LIVE";
