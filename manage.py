@@ -1,4 +1,4 @@
-"""SpeedTest 统一入口：目录可视化、离线测试、部署打包和只读生产验证。"""
+"""nexus-netms 统一入口：目录可视化、离线测试、部署打包和只读生产验证。"""
 import argparse
 import os
 from pathlib import Path

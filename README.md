@@ -1,6 +1,6 @@
-# SpeedTest
+# nexus-netms
 
-家庭网络测速、AP 信息关联与 NEXUS 监控项目，运行环境为绿联 DX4600 Pro / UGOS Pro Docker。当前仓库同时维护两个独立应用，以及 PC 端的测试、诊断和部署工具。
+家庭网络测速、AP 信息关联与网络监控项目，运行环境为绿联 DX4600 Pro / UGOS Pro Docker。当前仓库同时维护两个独立应用，以及 PC 端的测试、诊断和部署工具。
 
 ## 操作边界
 
