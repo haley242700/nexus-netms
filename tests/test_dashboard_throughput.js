@@ -2,10 +2,15 @@ const fs = require("fs");
 const vm = require("vm");
 const assert = require("assert");
 const source = fs.readFileSync("apps/nexus/network-dashboard/app.js", "utf8");
+const page = fs.readFileSync("apps/nexus/network-dashboard/index.html", "utf8");
+assert(page.includes('id="flow-canvas"'));
+assert(!page.includes('id="top-client-list"'));
+assert(!source.includes("renderTopClients(topClients"));
 const elements = {};
 const frames = [];
+const flowUpdates = [];
 const context = {
-  window: {matchMedia: () => ({matches: true})},
+  window: {matchMedia: () => ({matches: true}), nexusFlowUpdate: (down, up) => flowUpdates.push({down, up})},
   performance: {now: () => 0},
   requestAnimationFrame: callback => { frames.push(callback); return frames.length; },
   cancelAnimationFrame() {},
@@ -50,6 +55,7 @@ assert.strictEqual(Number(elements["gateway-rate"].textContent), 110);
 assert(elements["gateway-down"].textContent.includes("100"));
 assert.strictEqual(elements["gateway-history"].textContent, "1.50 GB");
 assert.strictEqual(elements["gateway-down-total"].textContent, "累计 1.00 GB");
+assert.deepStrictEqual(flowUpdates.at(-1), {down: 12500000, up: 1250000});
 
 context.renderApThroughput([
   {metric: {ap: "一楼主卧AP", direction: "up"}, value: [0, "1000000"]},
@@ -63,18 +69,6 @@ assert(elements["ap-throughput-list"].innerHTML.includes("一楼主卧AP"));
 assert(elements["ap-throughput-list"].innerHTML.includes("16.00 Mbps"));
 assert(elements["ap-throughput-list"].innerHTML.includes("2.00 MB"));
 
-context.renderTopClients([
-  {metric: {client: "设备A", mac: "a"}, value: [0, "1000"]},
-  {metric: {client: "设备B", mac: "b"}, value: [0, "4000"]},
-  {metric: {client: "设备C", mac: "c"}, value: [0, "3000"]},
-  {metric: {client: "设备D", mac: "d"}, value: [0, "2000"]},
-], [{metric: {mac: "b", direction: "down"}, value: [0, "1048576"]}]);
-const topHtml = elements["top-client-list"].innerHTML;
-assert(topHtml.indexOf("设备B") < topHtml.indexOf("设备C"));
-assert(topHtml.indexOf("设备C") < topHtml.indexOf("设备D"));
-assert(!topHtml.includes("设备A"));
-assert(topHtml.includes("1.00 MB"));
-
 const animated = {textContent: ""};
 context.window.matchMedia = () => ({matches: false});
 context.animateNumber("animation-test", animated, 0, String);
@@ -84,4 +78,4 @@ frames.shift()(350);
 assert(Number(animated.textContent) > 0 && Number(animated.textContent) < 100);
 frames.shift()(700);
 assert.strictEqual(Number(animated.textContent), 100);
-console.log("吞吐测试通过：实时/累计、单位换算、Top 3、3 秒定时及数字滚动均正确。");
+console.log("吞吐测试通过：实时/累计、单位换算、数据流联动、3 秒定时及数字滚动均正确。");

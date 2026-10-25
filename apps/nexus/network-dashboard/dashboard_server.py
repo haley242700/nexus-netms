@@ -40,6 +40,7 @@ FILES = {
     "/events.css": ("events.css", "text/css; charset=utf-8"),
     "/speedtest.css": ("speedtest.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "application/javascript; charset=utf-8"),
+    "/flow-field.js": ("flow-field.js", "application/javascript; charset=utf-8"),
     "/navigation.js": ("navigation.js", "application/javascript; charset=utf-8"),
     "/events.js": ("events.js", "application/javascript; charset=utf-8"),
     "/speedtest-app.js": ("speedtest-app.js", "application/javascript; charset=utf-8"),

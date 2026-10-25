@@ -146,6 +146,7 @@ function renderGateway(rows, totalRows) {
   animateNumber("gateway.total", $("gateway-history"), totalDown + totalUp, bytesText);
   animateNumber("gateway.total.down", $("gateway-down-total"), totalDown, v => `累计 ${bytesText(v)}`);
   animateNumber("gateway.total.up", $("gateway-up-total"), totalUp, v => `累计 ${bytesText(v)}`);
+  window.nexusFlowUpdate?.(down, up);
 }
 
 function renderApThroughput(rows, totalRows) {
@@ -258,7 +259,7 @@ async function refresh() {
   if (refreshing || !pageActive) return;
   refreshing = true;
   try {
-    const [aps, clients, apClients, pings, utils, channels, totalRows, fiveRows, rssiRows, weakRows, mloRows, collectorRows, gatewayTraffic, gatewayTotals, apTraffic, apTotals, topClients, rxRates, clientTraffic, clientTotals, history] = await Promise.all([
+    const [aps, clients, apClients, pings, utils, channels, totalRows, fiveRows, rssiRows, weakRows, mloRows, collectorRows, gatewayTraffic, gatewayTotals, apTraffic, apTotals, rxRates, clientTraffic, clientTotals, history] = await Promise.all([
       query('reyee_ap_online{kind="ap"} * on(ap,sn) group_left(model,ip) reyee_ap_info'),
       query('reyee_client_rssi_dbm'),
       query('reyee_ap_clients{kind="ap"}'),
@@ -275,7 +276,6 @@ async function refresh() {
       query('reyee_gateway_traffic_bytes_total'),
       query('reyee_ap_throughput_bps'),
       query('reyee_ap_traffic_bytes_total'),
-      query('topk(3, sum by (client, mac) (reyee_client_throughput_bps))'),
       query('reyee_client_rxrate_mbps'),
       query('reyee_client_throughput_bps'),
       query('reyee_client_traffic_bytes_total'),
@@ -305,7 +305,6 @@ async function refresh() {
     $("live-pill").classList.remove("error");
     renderGateway(gatewayTraffic, gatewayTotals);
     renderApThroughput(apTraffic, apTotals);
-    renderTopClients(topClients, clientTotals);
     renderAps(aps, apClients, pings, utils, channels);
     renderClients(clients, rxRates, clientTraffic, clientTotals);
     renderChannels(utils, channels);

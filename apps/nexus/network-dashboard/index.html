@@ -28,21 +28,31 @@
     <main>
       <section class="hero glass-panel">
         <div class="traffic-dashboard">
-          <section class="traffic-block gateway-live">
-            <div class="traffic-title"><span><i class="status-dot"></i>GATEWAY THROUGHPUT</span><b>3 SEC</b></div>
-            <div class="gateway-total"><strong id="gateway-rate">--</strong><span id="gateway-unit">Mbps</span></div>
-            <div class="gateway-caption">网关 WAN 总实时吞吐</div>
-            <div class="gateway-history"><span>历史累计</span><strong id="gateway-history">--</strong></div>
-            <div class="gateway-directions"><span>↓ 下载 <b id="gateway-down">--</b><small id="gateway-down-total">累计 --</small></span><span>↑ 上行 <b id="gateway-up">--</b><small id="gateway-up-total">累计 --</small></span></div>
-            <div class="data-stream" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <section class="traffic-block gateway-live flow-core">
+            <div class="traffic-title"><span><i class="status-dot"></i>WHOLE HOME DATA STREAM</span><b>LIVE · 3 SEC</b></div>
+            <div class="flow-overview">
+              <div class="flow-primary">
+                <span class="flow-kicker">WAN AGGREGATE THROUGHPUT</span>
+                <div class="gateway-total"><strong id="gateway-rate">--</strong><span id="gateway-unit">Mbps</span></div>
+                <div class="gateway-caption">全屋实时数据吞吐</div>
+              </div>
+              <div class="gateway-history"><span>历史数据总量<small>DOWNLOAD + UPLOAD</small></span><strong id="gateway-history">--</strong></div>
+            </div>
+            <div class="flow-stage" aria-label="WAN 与全屋网络之间的双向实时数据流">
+              <canvas id="flow-canvas" aria-hidden="true"></canvas>
+              <div class="flow-node wan"><i></i><strong>WAN</strong><small>INTERNET</small></div>
+              <div class="flow-node home"><i></i><strong>HOME</strong><small>WHOLE HOME</small></div>
+              <span class="flow-direction-label downstream">DOWNSTREAM</span>
+              <span class="flow-direction-label upstream">UPSTREAM</span>
+            </div>
+            <div class="gateway-directions">
+              <div class="flow-channel down"><span class="flow-channel-icon">↓</span><div><small>下载 · DATA IN</small><b id="gateway-down">--</b></div><em id="gateway-down-total">累计 --</em></div>
+              <div class="flow-channel up"><span class="flow-channel-icon">↑</span><div><small>上行 · DATA OUT</small><b id="gateway-up">--</b></div><em id="gateway-up-total">累计 --</em></div>
+            </div>
           </section>
           <section class="traffic-block ap-throughput">
             <div class="traffic-title"><span>AP LIVE + ASSOCIATED TOTAL</span><b>6 NODES</b></div>
             <div class="ap-throughput-list" id="ap-throughput-list"><div class="loading">读取 AP 吞吐…</div></div>
-          </section>
-          <section class="traffic-block top-clients">
-            <div class="traffic-title"><span>TRAFFIC LEADERS · LIVE + TOTAL</span><b>TOP 3</b></div>
-            <div class="top-client-list" id="top-client-list"><div class="loading">分析终端流量…</div></div>
           </section>
         </div>
         <div class="health-visual" aria-label="网络健康评分">
@@ -120,5 +130,6 @@
   <div class="toast" id="toast" role="status"></div>
   <script src="/navigation.js" defer></script>
   <script src="/app.js" defer></script>
+  <script src="/flow-field.js" defer></script>
 </body>
 </html>

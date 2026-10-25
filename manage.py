@@ -48,7 +48,7 @@ def offline_test(_args):
     for script in PYTHON_TESTS:
         run([sys.executable, script])
     node = shutil.which("node") or "node"
-    for script in ("apps/nexus/network-dashboard/app.js", "apps/nexus/network-dashboard/events.js", "apps/nexus/network-dashboard/speedtest-app.js"):
+    for script in ("apps/nexus/network-dashboard/app.js", "apps/nexus/network-dashboard/events.js", "apps/nexus/network-dashboard/speedtest-app.js", "apps/nexus/network-dashboard/navigation.js", "apps/nexus/network-dashboard/flow-field.js"):
         run([node, "--check", script])
     for script in JS_TESTS:
         run([node, script])
