@@ -14,6 +14,8 @@ assert(page.includes('id="score-modal"') && page.includes('id="score-detail-rows
 assert(styles.includes("width: min(520px,100%)"), "弹窗必须使用紧凑宽度");
 assert(styles.includes("rgba(29,40,63,.30)") && styles.includes("rgba(10,17,30,.30)") && styles.includes("blur(28px)"), "弹窗必须使用 70% 透明毛玻璃背景");
 assert(styles.includes(".score-modal.is-open") && source.includes("setTimeout(hide, 220)"), "弹窗必须支持渐入渐出");
+assert(!source.includes("radio-track") && !source.includes("radio-fill"), "AP 矩阵信道编号旁不得显示进度条");
+assert(source.includes("<span>CH ${channel ? Math.round(channel) : \"--\"}</span>"), "AP 矩阵必须保留信道编号");
 assert(page.includes('id="flow-canvas"'));
 assert(page.includes('class="flow-node-meter wan-meter"><span>上行总量'));
 assert(page.includes('class="flow-node-meter home-meter"><span>下行总量'));

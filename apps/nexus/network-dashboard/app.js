@@ -232,18 +232,17 @@ function renderTopClients(rows, totalRows) {
   ]));
 }
 
-function renderAps(aps, clientRows, pingRows, utilRows, channelRows) {
+function renderAps(aps, clientRows, pingRows, channelRows) {
   const clients = new Map(clientRows.map(r => [r.metric.ap, value(r)]));
   const pings = new Map(pingRows.map(r => [r.metric.name, value(r)]));
-  const utils = new Map(utilRows.map(r => [`${r.metric.ap}|${r.metric.band}`, value(r)]));
   const channels = new Map(channelRows.map(r => [`${r.metric.ap}|${r.metric.band}`, value(r)]));
   const order = new Map(["一楼主卧AP", "一楼北卧AP", "一楼客厅AP", "负一客厅AP", "负一卧室AP", "负一电脑房AP"].map((v,i) => [v,i]));
   aps.sort((a,b) => (order.get(a.metric.ap) ?? 99) - (order.get(b.metric.ap) ?? 99));
   $("ap-grid").innerHTML = aps.map(row => {
     const m = row.metric, online = value(row) === 1;
     const radio = ["2.4G", "5G"].map(band => {
-      const util = utils.get(`${m.ap}|${band}`), channel = channels.get(`${m.ap}|${band}`);
-      return `<div class="radio-row"><span>${band}</span><div class="radio-track"><div class="radio-fill" style="width:${Math.max(0, Math.min(100, util || 0))}%"></div></div><span>${channel ? Math.round(channel) : "--"}</span></div>`;
+      const channel = channels.get(`${m.ap}|${band}`);
+      return `<div class="radio-row"><span>${band}</span><span>CH ${channel ? Math.round(channel) : "--"}</span></div>`;
     }).join("");
     return `<article class="ap-card"><div class="ap-title"><strong>${esc(m.ap)}</strong><span class="online-state" style="color:${online ? "var(--green)" : "var(--red)"}"><i></i>${online ? "ONLINE" : "OFFLINE"}</span></div><div class="ap-model">${esc(m.model)} · ${esc(m.ip)}</div><div class="ap-numbers"><div class="ap-clients"><strong>${Math.round(clients.get(m.ap) || 0)}</strong><span>关联终端</span></div><div class="ap-ping">${round(pings.get(m.ap), 1)} ms<span>LAN LATENCY</span></div></div>${radio}</article>`;
   }).join("");
@@ -432,7 +431,7 @@ async function refresh() {
     $("live-pill").classList.remove("error");
     renderGateway(gatewayTraffic, gatewayTotals);
     renderApThroughput(apTraffic, apTotals);
-    renderAps(aps, apClients, pings, utils, channels);
+    renderAps(aps, apClients, pings, channels);
     renderClients(clients, rxRates, clientTraffic, clientTotals);
     renderChannels(utils, channels);
     drawLatency(history);
