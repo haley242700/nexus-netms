@@ -53,7 +53,7 @@ PYTHONPATH=apps/speedtest-ap .venv/Scripts/python.exe -c "..."
 MSYS_NO_PATHCONV=1 tools/platform-tools/adb.exe -s 192.168.110.28:5555 shell "..."
 ```
 
-git 推送注意：本机 git 配置了失效代理 `127.0.0.1:7892`，推送必须 `git -c http.proxy= -c https.proxy= push`。
+git 推送注意：GitHub 直连会被墙。VPN（小黄JS PC 端）开启时它监听 `127.0.0.1:7892`，推送用 `git -c http.proxy=http://127.0.0.1:7892 -c https.proxy=http://127.0.0.1:7892 push`；VPN 关闭时只能等下次开启再推，不要把代理写进 git config（否则 VPN 一关推送必失败）。
 
 ## 五、项目架构一句话版
 
