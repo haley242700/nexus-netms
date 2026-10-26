@@ -8,12 +8,16 @@ sys.path.insert(0, str(ROOT / "apps" / "nexus" / "network-dashboard"))
 from speedtest_analysis import percentile, record_and_analyze, score_metric
 
 for access_type in ("wired", "wireless"):
-    assert score_metric("download", 100, access_type) == 60
-    assert score_metric("download", 300, access_type) == 80
-    assert score_metric("download", 500, access_type) == 90
-    assert score_metric("download", 1000, access_type) == 95
+    assert score_metric("download", 100, access_type) == 30
+    assert score_metric("download", 300, access_type) == 55
+    assert score_metric("download", 500, access_type) == 70
     assert score_metric("ping", 150, access_type) == 0
     assert score_metric("jitter", 5, access_type) == 80
+assert score_metric("download", 1000, "wired") == 80
+assert score_metric("download", 1000, "wireless") == 85
+assert score_metric("download", 1600, "wired") == 88
+assert score_metric("download", 1600, "wireless") == 93
+assert score_metric("download", 2000, "wired") == 95
 assert score_metric("download", 2500, "wired") == 100
 assert score_metric("download", 2401, "wireless") == 100
 assert score_metric("download", 2401, "wired") < 100

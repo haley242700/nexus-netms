@@ -14,18 +14,20 @@ METRICS = {
     "ping": {"label": "网络延迟", "unit": "ms", "higherBetter": False, "weight": 0.20},
     "jitter": {"label": "抖动", "unit": "ms", "higherBetter": False, "weight": 0.15},
 }
-RATE_BASE = ((0, 0), (10, 10), (50, 40), (100, 60), (300, 80), (500, 90), (1000, 95))
+RATE_BASE = ((0, 0), (10, 5), (50, 15), (100, 30), (300, 55), (500, 70))
+WIRED_RATE_ANCHORS = RATE_BASE + ((1000, 80), (1600, 88), (2000, 95), (2500, 100))
+WIRELESS_RATE_ANCHORS = RATE_BASE + ((1000, 85), (1600, 93), (2401, 100))
 JITTER_ANCHORS = ((0, 100), (1, 100), (2, 95), (5, 80), (10, 60), (20, 35), (50, 10), (80, 0))
 SCORE_ANCHORS = {
     "wired": {
-        "download": RATE_BASE + ((2500, 100),),
-        "upload": RATE_BASE + ((2500, 100),),
+        "download": WIRED_RATE_ANCHORS,
+        "upload": WIRED_RATE_ANCHORS,
         "ping": ((0, 100), (3, 100), (5, 95), (10, 85), (20, 70), (30, 55), (50, 35), (100, 10), (150, 0)),
         "jitter": JITTER_ANCHORS,
     },
     "wireless": {
-        "download": RATE_BASE + ((2401, 100),),
-        "upload": RATE_BASE + ((2401, 100),),
+        "download": WIRELESS_RATE_ANCHORS,
+        "upload": WIRELESS_RATE_ANCHORS,
         "ping": ((0, 100), (5, 100), (10, 95), (20, 85), (30, 70), (50, 45), (100, 10), (150, 0)),
         "jitter": JITTER_ANCHORS,
     },
