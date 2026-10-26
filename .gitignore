@@ -34,3 +34,10 @@ htmlcov/
 Thumbs.db
 .vscode/
 .idea/
+
+# 体积大的二进制与系统残留
+*.apk
+/NVIDIA Corporation/
+/tools/platform-tools/
+/tools/platform-tools.zip
+/tools/scrcpy.zip

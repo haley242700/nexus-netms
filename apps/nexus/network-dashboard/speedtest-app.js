@@ -171,7 +171,7 @@ function deltaText(item) {
   if (!Number.isFinite(delta)) return "等待更多历史样本";
   const better = item.higherBetter ? delta > 0 : delta < 0;
   const verdict = Math.abs(delta) < 0.001 ? "持平" : better ? "更优" : "偏弱";
-  return `较 P50 ${delta > 0 ? "+" : ""}${analysisNumber(delta)} ${item.unit} · ${verdict}`;
+  return `较 50% ${delta > 0 ? "+" : ""}${analysisNumber(delta)} ${item.unit} · ${verdict}`;
 }
 
 function percentileChart(config, item) {
@@ -213,9 +213,9 @@ function percentileChart(config, item) {
   }).join("");
   const nodes = coordinates.map(point => {
     const role = point.p === best.p ? "最佳" : point.p === worst.p ? "最差" : point.p === 50 ? "中位" : "分位";
-    return `<circle class="chart-node ${role === "最佳" ? "best" : role === "最差" ? "worst" : ""}" cx="${point.x}" cy="${point.y.toFixed(2)}" r="${point.p === 50 ? 4.5 : 3.5}"><title>P${point.p} · ${role}：${analysisNumber(point.value)} ${item.unit}</title></circle>`;
+    return `<circle class="chart-node ${role === "最佳" ? "best" : role === "最差" ? "worst" : ""}" cx="${point.x}" cy="${point.y.toFixed(2)}" r="${point.p === 50 ? 4.5 : 3.5}"><title>${point.p}% · ${role}：${analysisNumber(point.value)} ${item.unit}</title></circle>`;
   }).join("");
-  const labels = coordinates.map(point => `<text class="chart-axis-label" x="${point.x}" y="${height - 15}" text-anchor="middle">P${point.p}</text>`).join("");
+  const labels = coordinates.map(point => `<text class="chart-axis-label" x="${point.x}" y="${height - 15}" text-anchor="middle">${point.p}%</text>`).join("");
   const superiority = Number(item.superiority);
   let currentReference = "";
   if (Number.isFinite(current) && Number.isFinite(superiority)) {
@@ -236,12 +236,12 @@ function percentileChart(config, item) {
     const labelX = Math.max(65, Math.min(width - 65, currentX));
     const percentileLabel = Number(currentPercentile.toFixed(1));
     const arrowPath = `M${labelX.toFixed(2)},30 C${labelX.toFixed(2)},43 ${currentX.toFixed(2)},${(currentY - 28).toFixed(2)} ${currentX.toFixed(2)},${(currentY - 9).toFixed(2)}`;
-    currentReference = `<rect class="chart-current-badge" x="${(labelX - 44).toFixed(2)}" y="4" width="88" height="21" rx="10.5"/><text class="chart-current-label" x="${labelX.toFixed(2)}" y="18" text-anchor="middle">本次 · P${percentileLabel}</text><path class="chart-current-arrow" d="${arrowPath}" stroke="url(#${arrowGradientId})" marker-end="url(#${arrowId})"/><circle class="chart-current-halo" cx="${currentX.toFixed(2)}" cy="${currentY.toFixed(2)}" r="9"/><circle class="chart-current-dot" cx="${currentX.toFixed(2)}" cy="${currentY.toFixed(2)}" r="3.5"><title>本次 ${analysisNumber(current)} ${item.unit} · 优劣分位 P${percentileLabel}</title></circle>`;
+    currentReference = `<rect class="chart-current-badge" x="${(labelX - 44).toFixed(2)}" y="4" width="88" height="21" rx="10.5"/><text class="chart-current-label" x="${labelX.toFixed(2)}" y="18" text-anchor="middle">本次 · ${percentileLabel}%</text><path class="chart-current-arrow" d="${arrowPath}" stroke="url(#${arrowGradientId})" marker-end="url(#${arrowId})"/><circle class="chart-current-halo" cx="${currentX.toFixed(2)}" cy="${currentY.toFixed(2)}" r="9"/><circle class="chart-current-dot" cx="${currentX.toFixed(2)}" cy="${currentY.toFixed(2)}" r="3.5"><title>本次 ${analysisNumber(current)} ${item.unit} · 优劣分位 ${percentileLabel}%</title></circle>`;
   }
-  const stat = (label, point, className) => `<div class="${className}"><span>P${point.p} · ${label}</span><strong>${analysisNumber(point.value)}</strong><small>${item.unit}</small></div>`;
-  const aria = points.map(point => `P${point.p} ${analysisNumber(point.value)} ${item.unit}`).join("，");
+  const stat = (label, point, className) => `<div class="${className}"><span>${point.p}% · ${label}</span><strong>${analysisNumber(point.value)}</strong><small>${item.unit}</small></div>`;
+  const aria = points.map(point => `${point.p}% ${analysisNumber(point.value)} ${item.unit}`).join("，");
 
-  return `<article class="percentile-card ${config.key}"><div class="percentile-card-head"><div><strong>${config.label}</strong><span>${direction}</span></div><div class="percentile-current"><span>本次</span><strong>${analysisNumber(item.current)} <small>${item.unit}</small></strong></div></div><div class="percentile-stats">${stat("最佳", best, "best")}${stat("中位", median, "median")}${stat("最差", worst, "worst")}</div><svg class="percentile-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${config.label}优劣历史分位，${direction}。${aria}"><defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop class="chart-fill-start"/><stop class="chart-fill-end" offset="1"/></linearGradient><linearGradient id="${arrowGradientId}" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff7ad9" stop-opacity=".22"/><stop offset="1" stop-color="#ff7ad9"/></linearGradient><marker id="${arrowId}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path class="chart-current-arrowhead" d="M0,0 L7,3.5 L0,7 L1.8,3.5 Z"/></marker></defs>${grid}<line class="chart-median-line" x1="${left}" y1="${y(median.value).toFixed(2)}" x2="${width - right}" y2="${y(median.value).toFixed(2)}"/><text class="chart-median-label" x="${left}" y="${(y(median.value) - 7).toFixed(2)}">P50 中位</text><path class="chart-area" d="${area}" fill="url(#${gradientId})"/><path class="chart-line" d="${line}"/>${nodes}${labels}${currentReference}</svg><div class="percentile-footer"><span>${deltaText(item)}</span><strong>优于 ${analysisNumber(item.superiority)}% 同组合历史</strong></div></article>`;
+  return `<article class="percentile-card ${config.key}"><div class="percentile-card-head"><div><strong>${config.label}</strong><span>${direction}</span></div><div class="percentile-current"><span>本次</span><strong>${analysisNumber(item.current)} <small>${item.unit}</small></strong></div></div><div class="percentile-stats">${stat("最佳", best, "best")}${stat("中位", median, "median")}${stat("最差", worst, "worst")}</div><svg class="percentile-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${config.label}优劣历史分位，${direction}。${aria}"><defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop class="chart-fill-start"/><stop class="chart-fill-end" offset="1"/></linearGradient><linearGradient id="${arrowGradientId}" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff7ad9" stop-opacity=".22"/><stop offset="1" stop-color="#ff7ad9"/></linearGradient><marker id="${arrowId}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path class="chart-current-arrowhead" d="M0,0 L7,3.5 L0,7 L1.8,3.5 Z"/></marker></defs>${grid}<line class="chart-median-line" x1="${left}" y1="${y(median.value).toFixed(2)}" x2="${width - right}" y2="${y(median.value).toFixed(2)}"/><text class="chart-median-label" x="${left}" y="${(y(median.value) - 7).toFixed(2)}">50% 中位</text><path class="chart-area" d="${area}" fill="url(#${gradientId})"/><path class="chart-line" d="${line}"/>${nodes}${labels}${currentReference}</svg><div class="percentile-footer"><span>${deltaText(item)}</span><strong>优于 ${analysisNumber(item.superiority)}% 同组合历史</strong></div></article>`;
 }
 
 function renderAnalysis(result) {
