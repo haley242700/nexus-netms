@@ -54,11 +54,15 @@ if (!numberSource || !deltaSource || !chartSource) throw new Error("缺少分位
 const renderPercentileChart = new Function(`${numberSource}\n${deltaSource}\n${chartSource}; return percentileChart;`)();
 const latencyChart = renderPercentileChart({key:"ping", label:"网络延迟"}, {current:4, unit:"ms", higherBetter:false, deltaMedian:-1, superiority:80, percentiles:{1:2,5:3,20:4,50:5,80:7,95:9,99:12}});
 if ((latencyChart.match(/class="chart-node/g) || []).length !== 7) throw new Error("分位图表必须包含七个节点");
-if (!latencyChart.includes("P1 · 最佳") || !latencyChart.includes("P99 · 最差")) throw new Error("低延迟指标的最佳／最差方向错误");
-if (!latencyChart.includes("chart-current-arrow") || !latencyChart.includes("本次 · P20") || latencyChart.includes("chart-current-line") || !latencyChart.includes("P50 中位") || latencyChart.includes("NaN")) throw new Error("本次成绩箭头或延迟百分位方向异常");
+if (!latencyChart.includes("P1 · 最差") || !latencyChart.includes("P99 · 最佳")) throw new Error("低延迟指标未统一为百分位越高越优秀");
+if (!latencyChart.includes("chart-current-arrow") || !latencyChart.includes("本次 · P80") || latencyChart.includes("chart-current-line") || !latencyChart.includes("P50 中位") || latencyChart.includes("NaN")) throw new Error("本次成绩箭头或延迟优劣百分位异常");
+const latencyValues = [...latencyChart.matchAll(/<title>P\d+ · [^：]+：([\d.]+) ms<\/title>/g)].map(match => Number(match[1]));
+if (latencyValues.length !== 7 || !latencyValues.every((value, index) => index === 0 || latencyValues[index - 1] >= value)) throw new Error("延迟曲线必须按数值降序排列");
 const downloadChart = renderPercentileChart({key:"download", label:"下载速率"}, {current:1600, unit:"Mbps", higherBetter:true, deltaMedian:100, superiority:80, percentiles:{1:500,5:800,20:1000,50:1500,80:1600,95:2000,99:2400}});
 if (!downloadChart.includes("本次 · P80") || !downloadChart.includes("P99 · 最佳") || !downloadChart.includes("P1 · 最差")) throw new Error("速率百分位或最佳／最差方向异常");
 if (!css.includes("--current: #ff7ad9") || !css.includes("color: var(--current)")) throw new Error("本次成绩缺少独立强调色");
+const worstJitterChart = renderPercentileChart({key:"jitter", label:"抖动"}, {current:0.36, unit:"ms", higherBetter:false, deltaMedian:0.12, superiority:7.1, percentiles:{1:0.12,5:0.16,20:0.19,50:0.24,80:0.27,95:0.3,99:0.36}});
+if (!worstJitterChart.includes("本次 · P7.1") || worstJitterChart.includes("本次 · P92.9") || !worstJitterChart.includes("P1 · 最差")) throw new Error("最差抖动样本的优劣百分位显示错误");
 const flatChart = renderPercentileChart({key:"jitter", label:"抖动"}, {current:0, unit:"ms", higherBetter:false, deltaMedian:0, superiority:50, percentiles:{1:0,5:0,20:0,50:0,80:0,95:0,99:0}});
 if (flatChart.includes("NaN") || flatChart.includes("Infinity")) throw new Error("相同分位值导致图表坐标异常");
 const rateSource = app.match(/function wirelessRate\([\s\S]*?\n\}/)?.[0];

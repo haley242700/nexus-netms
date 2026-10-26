@@ -168,7 +168,8 @@ function deltaText(item) {
 
 function percentileChart(config, item) {
   const percentiles = [1,5,20,50,80,95,99];
-  const points = percentiles.map(p => ({p, value:Number(item.percentiles[p])}));
+  const numericPoints = percentiles.map(p => ({p, value:Number(item.percentiles[p])}));
+  const points = item.higherBetter ? numericPoints : numericPoints.slice().reverse().map((point, index) => ({p:percentiles[index], value:point.value}));
   const current = Number(item.current);
   const values = points.map(point => point.value).filter(Number.isFinite);
   if (Number.isFinite(current)) values.push(current);
@@ -192,9 +193,9 @@ function percentileChart(config, item) {
   const line = coordinates.map((point, index) => `${index ? "L" : "M"}${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ");
   const area = `M${coordinates[0].x},${baseline} ${coordinates.map(point => `L${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ")} L${coordinates[coordinates.length - 1].x},${baseline} Z`;
   const median = points.find(point => point.p === 50);
-  const best = item.higherBetter ? points[points.length - 1] : points[0];
-  const worst = item.higherBetter ? points[0] : points[points.length - 1];
-  const direction = item.higherBetter ? "越高越好" : "越低越好";
+  const best = points[points.length - 1];
+  const worst = points[0];
+  const direction = `${item.higherBetter ? "数值越高越好" : "数值越低越好"} · 向右更优`;
   const gradientId = `percentile-gradient-${config.key}`;
   const arrowId = `percentile-arrow-${config.key}`;
   const grid = [0,0.5,1].map(ratio => {
@@ -209,8 +210,7 @@ function percentileChart(config, item) {
   const superiority = Number(item.superiority);
   let currentReference = "";
   if (Number.isFinite(current) && Number.isFinite(superiority)) {
-    const rawPercentile = item.higherBetter ? superiority : 100 - superiority;
-    const currentPercentile = Math.max(1, Math.min(99, rawPercentile));
+    const currentPercentile = Math.max(1, Math.min(99, superiority));
     const upperIndex = coordinates.findIndex(point => point.p >= currentPercentile);
     let currentX = coordinates[0].x;
     let currentY = coordinates[0].y;
@@ -226,12 +226,12 @@ function percentileChart(config, item) {
     }
     const labelX = Math.max(65, Math.min(width - 65, currentX));
     const percentileLabel = Number(currentPercentile.toFixed(1));
-    currentReference = `<text class="chart-current-label" x="${labelX.toFixed(2)}" y="17" text-anchor="middle">本次 · P${percentileLabel}</text><line class="chart-current-arrow" x1="${currentX.toFixed(2)}" y1="29" x2="${currentX.toFixed(2)}" y2="${(currentY - 7).toFixed(2)}" marker-end="url(#${arrowId})"/><circle class="chart-current-dot" cx="${currentX.toFixed(2)}" cy="${currentY.toFixed(2)}" r="4"><title>本次 ${analysisNumber(current)} ${item.unit} · 数值分位 P${percentileLabel}</title></circle>`;
+    currentReference = `<text class="chart-current-label" x="${labelX.toFixed(2)}" y="17" text-anchor="middle">本次 · P${percentileLabel}</text><line class="chart-current-arrow" x1="${currentX.toFixed(2)}" y1="29" x2="${currentX.toFixed(2)}" y2="${(currentY - 7).toFixed(2)}" marker-end="url(#${arrowId})"/><circle class="chart-current-dot" cx="${currentX.toFixed(2)}" cy="${currentY.toFixed(2)}" r="4"><title>本次 ${analysisNumber(current)} ${item.unit} · 优劣分位 P${percentileLabel}</title></circle>`;
   }
   const stat = (label, point, className) => `<div class="${className}"><span>P${point.p} · ${label}</span><strong>${analysisNumber(point.value)}</strong><small>${item.unit}</small></div>`;
   const aria = points.map(point => `P${point.p} ${analysisNumber(point.value)} ${item.unit}`).join("，");
 
-  return `<article class="percentile-card ${config.key}"><div class="percentile-card-head"><div><strong>${config.label}</strong><span>${direction}</span></div><div class="percentile-current"><span>本次</span><strong>${analysisNumber(item.current)} <small>${item.unit}</small></strong></div></div><div class="percentile-stats">${stat("最佳", best, "best")}${stat("中位", median, "median")}${stat("最差", worst, "worst")}</div><svg class="percentile-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${config.label}历史分位，${direction}。${aria}"><defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop class="chart-fill-start"/><stop class="chart-fill-end" offset="1"/></linearGradient><marker id="${arrowId}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path class="chart-current-arrowhead" d="M0,0 L6,3 L0,6 Z"/></marker></defs>${grid}<line class="chart-median-line" x1="${left}" y1="${y(median.value).toFixed(2)}" x2="${width - right}" y2="${y(median.value).toFixed(2)}"/><text class="chart-median-label" x="${left}" y="${(y(median.value) - 7).toFixed(2)}">P50 中位</text><path class="chart-area" d="${area}" fill="url(#${gradientId})"/><path class="chart-line" d="${line}"/>${nodes}${labels}${currentReference}</svg><div class="percentile-footer"><span>${deltaText(item)}</span><strong>优于 ${analysisNumber(item.superiority)}% 同组合历史</strong></div></article>`;
+  return `<article class="percentile-card ${config.key}"><div class="percentile-card-head"><div><strong>${config.label}</strong><span>${direction}</span></div><div class="percentile-current"><span>本次</span><strong>${analysisNumber(item.current)} <small>${item.unit}</small></strong></div></div><div class="percentile-stats">${stat("最佳", best, "best")}${stat("中位", median, "median")}${stat("最差", worst, "worst")}</div><svg class="percentile-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${config.label}优劣历史分位，${direction}。${aria}"><defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop class="chart-fill-start"/><stop class="chart-fill-end" offset="1"/></linearGradient><marker id="${arrowId}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path class="chart-current-arrowhead" d="M0,0 L6,3 L0,6 Z"/></marker></defs>${grid}<line class="chart-median-line" x1="${left}" y1="${y(median.value).toFixed(2)}" x2="${width - right}" y2="${y(median.value).toFixed(2)}"/><text class="chart-median-label" x="${left}" y="${(y(median.value) - 7).toFixed(2)}">P50 中位</text><path class="chart-area" d="${area}" fill="url(#${gradientId})"/><path class="chart-line" d="${line}"/>${nodes}${labels}${currentReference}</svg><div class="percentile-footer"><span>${deltaText(item)}</span><strong>优于 ${analysisNumber(item.superiority)}% 同组合历史</strong></div></article>`;
 }
 
 function renderAnalysis(result) {
