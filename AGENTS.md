@@ -1,87 +1,115 @@
-# AGENTS.md — AI 会话操作手册
+# AGENTS.md — nexus-netms 项目手册
 
-> 本文件是新 AI 会话的第一上下文。任何操作前先读完本文件。
-> 最后更新：2026-10-26（电视 VPN 方案落地后）
+> 新 AI 会话第一上下文。本文档基于当前代码生成（2026-10-27），改动代码前先读完。
+> 历史排障经验见 DECISIONS.md，进度见 STATUS.md，机器搭建见 docs/环境搭建.md。
 
-## 一、操作红线（违反任何一条都是事故）
+## 一、项目目标
 
-1. **PC 端**：文件操作仅限项目文件夹（`D:\SpeedTest\`）。确需操作其他路径必须先请求人类批准。
-2. **NAS 端**（绿联 DX4600 Pro，192.168.110.54）：可自由增删改查容器与文件。
-3. **睿易后台**（网关 + MACC 云端）：**只读**。这是用户最重要的生产环境，全屋真实网络设备，网络崩溃不可接受。
-4. **电视**（索尼 Android TV）：只允许 ADB 操作小黄JS 应用与输入法相关设置，不碰系统分区、不恢复出厂。
-5. **尝试纪律**：任何任务最多连续尝试 2 轮；失败立即停下报告卡点，不自动换方案反复试错；重大变更前先与人类确认；不做冗余验证。
+家庭网络监控与测速系统，运行在绿联 DX4600 Pro（UGOS Pro）的 Docker 上：
+只读采集锐捷睿易全屋网络（网关 + 6 AP + 2 交换机）遥测与事件，经 Prometheus/SQLite 入库，
+由 NEXUS 看板（`http://192.168.110.54:3002`）三个页面呈现，并内嵌 LibreSpeed 局域网测速与成绩分析。
 
-## 二、环境速查表
+## 二、操作红线（违反任一条都是事故）
 
-| 对象 | 地址/标识 | 说明 |
-| --- | --- | --- |
-| NAS | `192.168.110.54`（SSH 配置在 `config/secrets/nas.env`） | UGOS Pro，Docker 主战场 |
-| code-server 开发容器 | `http://192.168.110.54:8443` | NAS 上浏览器开发环境，密码在 NAS 端 `code-server.env` |
-| 睿易网关 | `https://192.168.110.1`（EG310MG-P，SN G1V403U011506） | 凭据 `config/secrets/login.env`，登录见 `apps/speedtest-ap/reyee_session.py` |
-| MACC 云端 | `https://noc.ruijie.com.cn`（凭据 `config/secrets/cloud.env`） | 只读查询用，登录态在内置浏览器 |
-| NEXUS 看板 | `http://192.168.110.54:3002`（/、/events、/speedtest） | 主交付物 |
-| AdGuard Home | `192.168.110.54:3003`（面板）/ `:53`（DNS） | **待命未接入网络**，去留待人类决策 |
-| 索尼电视 | `192.168.110.28`（MAC cc:6b:1e:0d:8c:ed） | ADB 调试已开，`adb -s 192.168.110.28:5555` |
-| GitHub 仓库 | `github.com/haley242700/nexus-netms` | 仓库名必须全小写 |
+1. **PC 端**：文件操作仅限 `D:\SpeedTest\`。
+2. **NAS 端**（192.168.110.54）：容器与文件可自由增删改查。
+3. **睿易后台**（网关 `https://192.168.110.1` + MACC 云端 noc.ruijie.com.cn）：**只读**。全屋真实生产网络。
+   代码层面也强制：`apps/nexus/reyee-exporter/reyee_exporter.py`、`apps/speedtest-ap/ap_lookup.py` 文档串明确
+   「只读，绝不调用配置接口」；全部查询只走 `devSta.get` / `devConfig.get`。
+4. **电视**（索尼 Android TV，192.168.110.28）：仅 ADB 操作小黄JS 与输入法，不碰系统分区。
+5. **尝试纪律**：任何任务最多连续 2 轮；失败即停并报告卡点；重大变更前先与人确认；不做冗余验证。
 
-## 三、设备清单（全屋 6 AP + 2 交换机 + 网关）
+## 三、技术栈
 
-- 网关：RG-EG310MG-P（2.5G 口，WAN 会话上限 1400，MTU 1492）
-- AP：一楼客厅、一楼主卧、负一楼书房、负一卧室等共 6 台（WiFi 6）
-- 交换机 2 台（.6 曾离线报警，后自愈；均 2.5G）
-- 已知终端大户：电视 `.28`（见第六节事故档案）
+- **后端/采集**：Python 3（标准库 http.server + requests + sqlite3 + paramiko），无 Web 框架。
+- **前端**：纯原生 HTML/CSS/JS，无构建步骤；自定义无刷新导航（`apps/nexus/network-dashboard/navigation.js`）实现 SPA 化。
+- **监控**：Prometheus + blackbox-exporter；指标由自研 exporter 以文本格式暴露。
+- **测速**：linuxserver/librespeed 容器，经看板 `/speedtest/engine/` 流式反向代理，不开放独立主机端口。
+- **部署**：Docker Compose；NAS 生产目录 `/volume1/docker/nexus/`，开发容器 `/volume1/docker/dev-workspace/`。
 
 ## 四、常用命令
 
 ```bash
-# 离线全量测试（不碰生产，改代码后必跑）
-python manage.py test
+python manage.py test            # 离线全量测试（16 模块：7 Python + 3 JS 语法 + 3 JS + 编译检查），改代码后必跑
+python manage.py package all     # 生成干净部署包到 dist/（自动排除密钥/数据库/日志）
+python manage.py verify          # 生产只读验证（需内网）
+python manage.py tree            # 项目结构
 
-# 生成部署包 → 上传 NAS 对应目录重建容器
-python manage.py package all
-
-# NAS 执行命令（密码在 nas.env）
+# NAS 执行命令
 PYTHONPATH=. .venv/Scripts/python.exe tools/nas/nas_ssh.py "<命令>"
-# NAS 上 docker 命令需要提权：echo <密码> | sudo -S docker ps
 
-# 网关只读查询
-PYTHONPATH=apps/speedtest-ap .venv/Scripts/python.exe -c "..."
-# 客户端类：from ap_lookup import ReyeeClient; c._cmd('user_list', {...})
-# 登录：reyee_session.login(load_env('config/secrets/login.env'))
+# 网关只读查询（登录逻辑在 apps/speedtest-ap/reyee_session.py）
+PYTHONPATH=apps/speedtest-ap .venv/Scripts/python.exe -c "from reyee_session import login,load_env; ..."
 
-# 电视 ADB（Git Bash 必须加 MSYS_NO_PATHCONV=1，否则 /data 路径被改写）
+# 电视 ADB（Git Bash 必须 MSYS_NO_PATHCONV=1）
 MSYS_NO_PATHCONV=1 tools/platform-tools/adb.exe -s 192.168.110.28:5555 shell "..."
 ```
 
-git 推送注意：GitHub 直连会被墙。VPN（小黄JS PC 端）开启时它监听 `127.0.0.1:7892`，推送用 `git -c http.proxy=http://127.0.0.1:7892 -c https.proxy=http://127.0.0.1:7892 push`；VPN 关闭时只能等下次开启再推，不要把代理写进 git config（否则 VPN 一关推送必失败）。
+git 推送：GitHub 直连被墙；VPN 开启时监听 `127.0.0.1:7892`，用
+`git -c http.proxy=http://127.0.0.1:7892 -c https.proxy=http://127.0.0.1:7892 push`，**不要**写进 git config。
 
-## 五、项目架构一句话版
+## 五、目录结构
 
-`reyee-exporter`（Python，只读轮询网关 + 系统日志入库）→ SQLite 事件库 → `network-dashboard`（纯前端 + `dashboard_server.py`，端口 3001→3002）三个页面（总览/事件/测速）；`nexus-librespeed` 内嵌测速引擎经 `/speedtest/engine/` 流式转发；Prometheus + Blackbox 监控。NAS 生产目录 `/volume1/docker/nexus/`，开发容器项目在 `/volume1/docker/dev-workspace/`（仓库克隆于容器内 `/workspace/SpeedTest`）。
+```text
+apps/
+├── nexus/                    # 主交付物 NEXUS
+│   ├── network-dashboard/    # 看板：dashboard_server.py(HTTP服务) + 3页面(总览/事件/测速) + 前端JS/CSS
+│   ├── reyee-exporter/       # 采集：reyee_exporter.py(Prometheus指标) + event_store.py(事件入库)
+│   ├── prometheus/ blackbox/ # 监控配置（数据卷保留旧名 monitoring_prometheus_data）
+│   ├── docker-compose.yaml   # 5 服务：prometheus/blackbox/reyee-exporter/librespeed/network-dashboard
+│   └── grafana/ public-gateway/  # 保留的历史配置，当前主链路不用
+├── speedtest-ap/             # 原始原型：LibreSpeed 反向代理 + AP 反查（server.py、ap_lookup.py、test.py）
+└── dev-workspace/            # NAS 浏览器开发环境（code-server + deploy-nexus.sh 一键部署）
+tools/                        # PC 端工具（nas SSH、reyee 诊断、verification 只读验证、common.py 统一入口）
+tests/                        # 离线回归 + fixtures 脱敏数据
+config/secrets/               # 真实凭据（Git 完全忽略）；模板在 config/examples/
+artifacts/                    # 截图/日志/研究产物（Git 忽略）
+dist/                         # 部署包（Git 忽略，可由 manage.py package 重建）
+```
 
-## 六、事故档案与进行中的事（2026-10-26）
+## 六、核心模块与关键数据流
 
-**WAN 会话超限事故（已定位，治理中）**
-- 现象：WAN 会话峰值 4229（上限 1400），半连接 4003，多次全屋云连接闪断
-- 根因：电视 `.28` 访问被墙海外域名失败 → 无限重试 → 半连接风暴（云端 AI 诊断异常 IP 仅 .28）
-- 治标：睿易 AI 防护已开单 IP 限流 249
-- 治本：电视已装机场官方客户端小黄JS（包名 `com.xhjs`，ClashMeta 内核），**智能分流模式**，2026-10-26 20:31 已连接
-- 待办：观察 WAN 会话趋势（MACC 诊断页历史趋势图），稳定数日后由人类决策是否撤限流
-- 验证报告：`artifacts/tv-vpn-effectiveness-20261026.md`——10-26 22:33 VPN 后全面诊断「未发现异常」，方案有效；建议观察 2-3 天（重点夜间待机）后由人类决策是否撤限流 249
+```text
+reyee-exporter（每 3s ap_list+sta_list，30s 静态/备注，30s 系统日志）
+  → Prometheus 指标 /metrics :9108        → 看板 /api/query(_range) 转发给前端图表
+  → EventStore → SQLite events.db (WAL)    → 看板 /api/events 只读查询（漫游/离线/证据链）
+浏览器测速 → /speedtest/engine/* 流式转发 → librespeed 容器
+测速结果 POST /api/speedtest-results
+  → ReyeeClient.lookup_by_ip(访问者IP) 取 AP/交换机上下文
+  → speedtest_analysis.record_and_analyze 评分(有线/无线锚点) + 同 combo_key 历史百分位
+  → SQLite speedtest.db → 前端渲染成绩与分位图
+/api/ap-info → 按访问者真实 IP 只读反查当前连接 AP（失败不影响测速）
+```
 
-**电视 ADB 操作手册（血泪经验）**
-- 索尼 kcm 会把 ADB 注入的数字按 T9 改写（2→a、@ 丢失）→ 已装 ADBKeyBoard（`com.android.adbkeyboard/.AdbIME`），用 `am broadcast -a ADB_INPUT_TEXT --es msg '...'` 注入
-- `input keyevent` 的 DEL/MOVE_HOME 在输入框上无效；清空应用数据用 `pm clear com.xhjs`
-- 屏幕键盘不接受 ADB 触摸，只能遥控器
-- 小黄JS 登录页「记住我」与「自动登录」**互斥**（App bug），当前只勾了「记住我」
-- VPN 远程开关：`am broadcast -a com.xhjs.action.START / STOP / TOGGLE`（TempActivity，已验证）
+关键文件：
+- 只读客户端唯一实现：`apps/speedtest-ap/ap_lookup.py`（`ReyeeClient`，会话缓存 + 自动重登 + 列表 TTL 缓存）。诊断工具经 `tools/common.py` 复用，**禁止复制第二份客户端实现**。
+- 登录加密：`apps/speedtest-ap/test.py`（`fetch_device_key` + `aes_encrypt_openssl`，EGW 登录需先取设备密钥）。
+- 评分/分位：`apps/nexus/network-dashboard/speedtest_analysis.py`。
+- 事件解析：`apps/nexus/reyee-exporter/event_store.py`（漫游正则、离线状态机、syslog 去重、证据链）。
+- 页面跳转性能：`navigation.js`（预取 + 模块作用域脚本 + ETag）。
 
-**待命组件**
-- AdGuard Home（NAS 容器，未接入网络）：密码空、面板 3003；`AdGuardHome.yaml` 的 `bootstrap_dns` 必须单行字符串。是否做 NEXUS 第四页由人类决策。
+## 七、外部依赖与凭据
 
-## 七、已知坑速览
+| 对象 | 位置 | 凭据 |
+|---|---|---|
+| 睿易网关 EG310MG-P | `https://192.168.110.1` | `config/secrets/login.env`（EG_URL/EG_USERNAME/EG_PASSWORD） |
+| MACC 云端 | noc.ruijie.com.cn | `config/secrets/cloud.env` |
+| NAS SSH | 192.168.110.54 | `config/secrets/nas.env`（经 tools/nas/nas_ssh.py） |
+| code-server | :8443 | NAS 端 `dev-workspace/secrets/code-server.env` |
+| GitHub | haley242700/nexus-netms（仓库名强制全小写） | 推送走 VPN 代理 7892 |
 
-- 绿联 NAS 文件管理器上传 `.env` 会「成功但消失」→ 用 SSH 写入
-- GitHub 仓库名强制小写，引用统一 `nexus-netms`
-- 轩辕镜像加速：NAS Docker 配置了 1ms.run；PC 走 jsdelivr 镜像可绕开 GitHub 下载被墙
-- 下载极慢时立即停止并报告，不在慢速下载上空耗（用户家 2000M 宽带）
+## 八、编码规范
+
+1. 真实密码只进 `config/secrets/` 或环境变量；任何日志/输出不打印凭据（代码中已全面贯彻）。
+2. 睿易接口只调 `devSta.get` / `devConfig.get`；新增查询先在 `artifacts/research/` 的前端 JS 里确认模块名（方法见 DECISIONS.md）。
+3. 看板显示名覆盖写在 `reyee_exporter.py` 的 `LOCAL_NAME_OVERRIDES`，**不回写**睿易后台。
+4. SQLite 一律 WAL 模式；采集线程独占写入连接，页面用独立只读连接。
+5. 页面/指标数据要保持「百分位越高越优秀」的统一方向（低优指标在前端反转），见 `speedtest_analysis.py` 与 `tests/test_speedtest_page.js`。
+6. 部署相关改动后必跑 `python manage.py test`；提交前 `git status --ignored` 确认没有混入受保护文件。
+
+## 九、NAS 部署
+
+1. PC：`python manage.py package all`。
+2. 上传 `dist/nexus/` 内容到 `/volume1/docker/nexus/`（部署包不含 login.env；生产密钥在该目录 `secrets/`）。
+3. `docker compose up -d --build` 并 restart network-dashboard + reyee-exporter（Python 文件是只读挂载，必须重启进程才生效）。
+   NAS 容器内可一键完成：`apps/dev-workspace/deploy-nexus.sh`（测试→打包→拷贝→重建→健康检查）。
