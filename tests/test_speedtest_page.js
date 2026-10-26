@@ -41,6 +41,8 @@ if (!app.includes('fetch("/api/speedtest-results"')) throw new Error("缺少测�
 if (!app.includes("[1,5,20,50,80,95,99]")) throw new Error("缺少七档历史分位");
 if (!app.includes("saveSpeedtestAnalysis(latestData)")) throw new Error("测速完成未触发分析");
 if (!page.includes("下载 40% · 上传 25% · 延迟 20% · 抖动 15%")) throw new Error("缺少评分权重说明");
+if (!page.includes("无线 2401 Mbps、有线 2500 Mbps 分别为 100 分")) throw new Error("缺少有线/无线速率满分标准");
+if (!page.includes("无线延迟</strong>≤5 ms 满分")) throw new Error("缺少无线延迟评分标准");
 if (!css.includes("@media (max-width:720px)")) throw new Error("缺少移动端布局");
 const rateSource = app.match(/function wirelessRate\([\s\S]*?\n\}/)?.[0];
 if (!rateSource) throw new Error("缺少协商速率格式化");

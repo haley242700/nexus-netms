@@ -14,11 +14,21 @@ METRICS = {
     "ping": {"label": "网络延迟", "unit": "ms", "higherBetter": False, "weight": 0.20},
     "jitter": {"label": "抖动", "unit": "ms", "higherBetter": False, "weight": 0.15},
 }
+RATE_BASE = ((0, 0), (10, 10), (50, 40), (100, 60), (300, 80), (500, 90), (1000, 95))
+JITTER_ANCHORS = ((0, 100), (1, 100), (2, 95), (5, 80), (10, 60), (20, 35), (50, 10), (80, 0))
 SCORE_ANCHORS = {
-    "download": ((0, 0), (10, 10), (50, 40), (100, 60), (300, 80), (500, 90), (1000, 100)),
-    "upload": ((0, 0), (10, 10), (50, 40), (100, 60), (300, 80), (500, 90), (1000, 100)),
-    "ping": ((0, 100), (3, 100), (5, 95), (10, 85), (20, 70), (30, 55), (50, 35), (100, 10), (150, 0)),
-    "jitter": ((0, 100), (1, 100), (2, 95), (5, 80), (10, 60), (20, 35), (50, 10), (80, 0)),
+    "wired": {
+        "download": RATE_BASE + ((2500, 100),),
+        "upload": RATE_BASE + ((2500, 100),),
+        "ping": ((0, 100), (3, 100), (5, 95), (10, 85), (20, 70), (30, 55), (50, 35), (100, 10), (150, 0)),
+        "jitter": JITTER_ANCHORS,
+    },
+    "wireless": {
+        "download": RATE_BASE + ((2401, 100),),
+        "upload": RATE_BASE + ((2401, 100),),
+        "ping": ((0, 100), (5, 100), (10, 95), (20, 85), (30, 70), (50, 45), (100, 10), (150, 0)),
+        "jitter": JITTER_ANCHORS,
+    },
 }
 
 
@@ -36,8 +46,8 @@ def metric_value(payload, key):
     return round(value, 3)
 
 
-def score_metric(key, value):
-    anchors = SCORE_ANCHORS[key]
+def score_metric(key, value, access_type="wired"):
+    anchors = SCORE_ANCHORS[access_type][key]
     if value <= anchors[0][0]:
         return anchors[0][1]
     if value >= anchors[-1][0]:
@@ -49,11 +59,11 @@ def score_metric(key, value):
     return 0
 
 
-def score_results(metrics):
-    scores = {key: score_metric(key, metrics[key]) for key in METRICS}
+def score_results(metrics, access_type="wired"):
+    scores = {key: score_metric(key, metrics[key], access_type) for key in METRICS}
     overall = round(sum(scores[key] * config["weight"] for key, config in METRICS.items()), 1)
     grade = "卓越" if overall >= 90 else "良好" if overall >= 80 else "中等" if overall >= 70 else "合格" if overall >= 60 else "待优化"
-    return {"overall": overall, "grade": grade, "metrics": scores}
+    return {"overall": overall, "grade": grade, "accessType": access_type, "metrics": scores}
 
 
 def percentile(values, percent):
@@ -190,6 +200,6 @@ def record_and_analyze(path, payload, context, client_name, gateway_host):
         "terminal": name,
         "identity": identity,
         "context": safe_context,
-        "scores": score_results(metrics),
+        "scores": score_results(metrics, identity["accessType"]),
         "analysis": analyze_rows(rows, metrics),
     }

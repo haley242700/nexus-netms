@@ -7,11 +7,22 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "apps" / "nexus" / "network-dashboard"))
 from speedtest_analysis import percentile, record_and_analyze, score_metric
 
-assert score_metric("download", 1000) == 100
-assert score_metric("download", 100) == 60
-assert score_metric("ping", 3) == 100
-assert score_metric("ping", 150) == 0
-assert score_metric("jitter", 5) == 80
+for access_type in ("wired", "wireless"):
+    assert score_metric("download", 100, access_type) == 60
+    assert score_metric("download", 300, access_type) == 80
+    assert score_metric("download", 500, access_type) == 90
+    assert score_metric("download", 1000, access_type) == 95
+    assert score_metric("ping", 150, access_type) == 0
+    assert score_metric("jitter", 5, access_type) == 80
+assert score_metric("download", 2500, "wired") == 100
+assert score_metric("download", 2401, "wireless") == 100
+assert score_metric("download", 2401, "wired") < 100
+assert score_metric("ping", 3, "wired") == 100
+assert score_metric("ping", 5, "wireless") == 100
+assert score_metric("ping", 10, "wireless") == 95
+assert score_metric("ping", 20, "wireless") == 85
+assert score_metric("ping", 30, "wireless") == 70
+assert score_metric("ping", 10, "wired") == 85
 assert percentile([0, 10], 50) == 5
 assert percentile([1, 2, 3, 4, 5], 20) == 1.8
 
@@ -35,6 +46,7 @@ with tempfile.TemporaryDirectory(dir=ROOT / "artifacts" / "tmp") as tmp:
     first = record_and_analyze(path, {"download": 100, "upload": 10, "ping": 1, "jitter": 1}, wireless, "我的手机", "192.168.110.1")
     assert first["saved"] and first["identity"]["connectionDevice"] == "负一卧室AP"
     assert first["identity"]["clientKey"] == "86:ff:81:81:b5:be"
+    assert first["scores"]["accessType"] == "wireless"
     assert first["analysis"]["needed"] == 4 and "percentiles" not in first["analysis"]["metrics"]["download"]
 
     for index in range(2, 6):
