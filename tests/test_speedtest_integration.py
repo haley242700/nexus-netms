@@ -78,7 +78,7 @@ module.EVENT_DB = str(name_db)
 upstream = ThreadingHTTPServer(("127.0.0.1", 0), UpstreamHandler)
 dashboard = ThreadingHTTPServer(("127.0.0.1", 0), module.Handler)
 for server in (upstream, dashboard):
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True).start()
 
 module.LIBRESPEED = f"http://127.0.0.1:{upstream.server_address[1]}"
 base = f"http://127.0.0.1:{dashboard.server_address[1]}"
