@@ -69,14 +69,33 @@
 .percentile-area { margin-top: 18px; }
 .percentile-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .percentile-title strong { font-size: 12px; font-weight: 500; }.percentile-title span { color: var(--muted); font-size: 9px; }
-.percentile-scroll { overflow-x: auto; border: 1px solid rgba(145,172,230,.07); border-radius: 11px; }
-.percentile-scroll table { width: 100%; min-width: 850px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.percentile-scroll th,.percentile-scroll td { padding: 11px 10px; border-bottom: 1px solid rgba(255,255,255,.045); text-align: right; white-space: nowrap; font-size: 10px; }
-.percentile-scroll th { background: rgba(98,245,255,.025); color: var(--muted); font-size: 8px; font-weight: 500; }
-.percentile-scroll th:first-child,.percentile-scroll td:first-child { text-align: left; }
-.percentile-scroll td:first-child strong { display: block; font-size: 11px; font-weight: 500; }.percentile-scroll td:first-child small { color: var(--muted); font-size: 8px; }
-.percentile-scroll td:nth-child(2) { color: var(--cyan); font-weight: 600; }.percentile-scroll td:last-child { color: #b9c9e0; }
-.percentile-scroll tr:last-child td { border-bottom: 0; }
+.percentile-charts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.percentile-card { --chart: #62f5ff; --chart-rgb: 98,245,255; min-width: 0; padding: 16px 17px 13px; overflow: hidden; border: 1px solid rgba(var(--chart-rgb),.11); border-radius: 14px; background: radial-gradient(circle at 85% 0, rgba(var(--chart-rgb),.07), transparent 38%), linear-gradient(145deg, rgba(20,30,48,.7), rgba(9,14,25,.48)); box-shadow: inset 0 1px 0 rgba(255,255,255,.025); font-variant-numeric: tabular-nums; }
+.percentile-card.ping,.percentile-card.jitter { --chart: #aa96ff; --chart-rgb: 170,150,255; }
+.percentile-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.percentile-card-head > div:first-child > strong { display: block; color: #e2edff; font-size: 13px; font-weight: 520; }
+.percentile-card-head > div:first-child > span { display: inline-block; margin-top: 6px; padding: 3px 7px; border-radius: 5px; background: rgba(var(--chart-rgb),.07); color: var(--chart); font-size: 8px; }
+.percentile-current { text-align: right; }
+.percentile-current > span { display: block; color: var(--muted); font-size: 8px; }
+.percentile-current > strong { display: block; margin-top: 4px; color: var(--chart); font-size: 19px; line-height: 1; font-weight: 550; }
+.percentile-current small { color: #7f91ad; font-size: 8px; font-weight: 400; }
+.percentile-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-top: 14px; }
+.percentile-stats > div { min-width: 0; padding: 8px 9px; border: 1px solid rgba(145,172,230,.06); border-radius: 8px; background: rgba(255,255,255,.018); }
+.percentile-stats span { display: block; color: var(--muted); font-size: 8px; white-space: nowrap; }
+.percentile-stats strong { display: inline-block; margin-top: 5px; color: #dce8fa; font-size: 14px; font-weight: 520; }
+.percentile-stats small { margin-left: 4px; color: #667994; font-size: 7px; }
+.percentile-stats .best strong { color: var(--green); }.percentile-stats .worst strong { color: var(--amber); }.percentile-stats .median strong { color: var(--chart); }
+.percentile-chart { display: block; width: 100%; height: auto; margin-top: 8px; overflow: visible; }
+.chart-grid { stroke: rgba(145,172,230,.07); stroke-width: 1; stroke-dasharray: 2 5; }
+.chart-area { opacity: .75; }.chart-fill-start { stop-color: var(--chart); stop-opacity: .2; }.chart-fill-end { stop-color: var(--chart); stop-opacity: 0; }
+.chart-line { fill: none; stroke: var(--chart); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 5px rgba(var(--chart-rgb),.2)); }
+.chart-node { fill: #101827; stroke: var(--chart); stroke-width: 1.8; }.chart-node.best { stroke: var(--green); }.chart-node.worst { stroke: var(--amber); }
+.chart-axis-label { fill: #73849f; font-size: 9px; }
+.chart-median-line { stroke: rgba(var(--chart-rgb),.24); stroke-width: 1; stroke-dasharray: 3 5; }.chart-median-label { fill: var(--chart); opacity: .65; font-size: 8px; }
+.chart-current-line { stroke: rgba(255,194,107,.7); stroke-width: 1.2; stroke-dasharray: 6 4; }.chart-current-label { fill: #ffc26b; font-size: 8px; }
+.percentile-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid rgba(145,172,230,.06); color: #9aabc3; font-size: 9px; line-height: 1.5; }
+.percentile-footer strong { color: var(--chart); font-size: 8px; font-weight: 500; text-align: right; }
+@media (max-width:720px) { .percentile-charts { grid-template-columns: 1fr; }.percentile-card { padding: 14px 12px 12px; }.percentile-footer { align-items: flex-start; flex-direction: column; gap: 4px; }.percentile-footer strong { text-align: left; } }
 .score-method { margin-top: 14px; color: var(--muted); font-size: 10px; }
 .score-method summary { width: fit-content; color: #9aabc5; cursor: pointer; }.score-method div { padding: 5px 0 0; line-height: 1.75; }.score-method p { margin: 7px 0; }.score-method strong { color: #cbd8ec; font-weight: 500; }
 body.testing .speed-stage .status-dot { animation: pulse .8s ease-in-out infinite; }

@@ -28,9 +28,10 @@ for (const name of ["app.js", "events.js", "speedtest-app.js"]) {
 const page = fs.readFileSync(`${dashboard}/speedtest.html`, "utf8");
 const app = fs.readFileSync(`${dashboard}/speedtest-app.js`, "utf8");
 const css = fs.readFileSync(`${dashboard}/speedtest.css`, "utf8");
-for (const id of ["speed-toggle", "result-download", "result-upload", "result-ping", "result-jitter", "context-client", "context-ap", "context-rssi", "context-rate", "speed-analysis", "analysis-overall", "analysis-metrics", "percentile-rows", "analysis-combo"]) {
+for (const id of ["speed-toggle", "result-download", "result-upload", "result-ping", "result-jitter", "context-client", "context-ap", "context-rssi", "context-rate", "speed-analysis", "analysis-overall", "analysis-metrics", "percentile-charts", "analysis-combo"]) {
   if (!page.includes(`id="${id}"`)) throw new Error(`测速页缺少 ${id}`);
 }
+if (page.includes("percentile-rows") || page.includes("percentile-scroll")) throw new Error("旧分位表格应完全移除");
 if (!page.includes('<base href="/speedtest/engine/">')) throw new Error("Web Worker 路径未固定");
 if (!page.includes('/speedtest/engine/speedtest.js')) throw new Error("缺少 LibreSpeed 引擎");
 if (!app.includes('fetch("/api/ap-info"')) throw new Error("缺少 AP 查询");
@@ -45,6 +46,18 @@ if (!page.includes("无线 1000 / 1600 / 2401 Mbps 为 85 / 93 / 100 分")) thro
 if (!page.includes("有线 1000 / 1600 / 2000 / 2500 Mbps 为 80 / 88 / 95 / 100 分")) throw new Error("缺少有线速率评分标准");
 if (!page.includes("无线延迟</strong>≤5 ms 满分")) throw new Error("缺少无线延迟评分标准");
 if (!css.includes("@media (max-width:720px)")) throw new Error("缺少移动端布局");
+if (!css.includes("grid-template-columns: repeat(2,minmax(0,1fr))") || !css.includes(".percentile-charts { grid-template-columns: 1fr; }")) throw new Error("分位图表缺少桌面双列或移动单列布局");
+const numberSource = app.match(/function analysisNumber\([\s\S]*?\n\}/)?.[0];
+const deltaSource = app.match(/function deltaText\([\s\S]*?\n\}/)?.[0];
+const chartSource = app.match(/function percentileChart\([\s\S]*?\n\}/)?.[0];
+if (!numberSource || !deltaSource || !chartSource) throw new Error("缺少分位图表渲染函数");
+const renderPercentileChart = new Function(`${numberSource}\n${deltaSource}\n${chartSource}; return percentileChart;`)();
+const latencyChart = renderPercentileChart({key:"ping", label:"网络延迟"}, {current:4, unit:"ms", higherBetter:false, deltaMedian:-1, superiority:80, percentiles:{1:2,5:3,20:4,50:5,80:7,95:9,99:12}});
+if ((latencyChart.match(/class="chart-node/g) || []).length !== 7) throw new Error("分位图表必须包含七个节点");
+if (!latencyChart.includes("P1 · 最佳") || !latencyChart.includes("P99 · 最差")) throw new Error("低延迟指标的最佳／最差方向错误");
+if (!latencyChart.includes("chart-current-line") || !latencyChart.includes("P50 中位") || latencyChart.includes("NaN")) throw new Error("分位图表参考线或数值异常");
+const flatChart = renderPercentileChart({key:"jitter", label:"抖动"}, {current:0, unit:"ms", higherBetter:false, deltaMedian:0, superiority:50, percentiles:{1:0,5:0,20:0,50:0,80:0,95:0,99:0}});
+if (flatChart.includes("NaN") || flatChart.includes("Infinity")) throw new Error("相同分位值导致图表坐标异常");
 const rateSource = app.match(/function wirelessRate\([\s\S]*?\n\}/)?.[0];
 if (!rateSource) throw new Error("缺少协商速率格式化");
 const formatWirelessRate = new Function(`${rateSource}; return wirelessRate;`)();

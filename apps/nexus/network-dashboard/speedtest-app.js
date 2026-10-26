@@ -166,6 +166,52 @@ function deltaText(item) {
   return `较 P50 ${delta > 0 ? "+" : ""}${analysisNumber(delta)} ${item.unit} · ${verdict}`;
 }
 
+function percentileChart(config, item) {
+  const percentiles = [1,5,20,50,80,95,99];
+  const points = percentiles.map(p => ({p, value:Number(item.percentiles[p])}));
+  const current = Number(item.current);
+  const values = points.map(point => point.value).filter(Number.isFinite);
+  if (Number.isFinite(current)) values.push(current);
+  if (!values.length) return "";
+
+  let minimum = Math.min(...values);
+  let maximum = Math.max(...values);
+  const padding = Math.max((maximum - minimum) * 0.14, Math.abs(maximum) * 0.02, 1);
+  minimum = Math.max(0, minimum - padding);
+  maximum += padding;
+  const width = 560;
+  const height = 210;
+  const left = 24;
+  const right = 24;
+  const top = 25;
+  const bottom = 43;
+  const baseline = height - bottom;
+  const x = index => left + index * (width - left - right) / (points.length - 1);
+  const y = value => top + (maximum - value) * (baseline - top) / (maximum - minimum);
+  const coordinates = points.map((point, index) => ({...point, x:x(index), y:y(point.value)}));
+  const line = coordinates.map((point, index) => `${index ? "L" : "M"}${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ");
+  const area = `M${coordinates[0].x},${baseline} ${coordinates.map(point => `L${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ")} L${coordinates[coordinates.length - 1].x},${baseline} Z`;
+  const median = points.find(point => point.p === 50);
+  const best = item.higherBetter ? points[points.length - 1] : points[0];
+  const worst = item.higherBetter ? points[0] : points[points.length - 1];
+  const direction = item.higherBetter ? "越高越好" : "越低越好";
+  const gradientId = `percentile-gradient-${config.key}`;
+  const grid = [0,0.5,1].map(ratio => {
+    const gridY = top + ratio * (baseline - top);
+    return `<line class="chart-grid" x1="${left}" y1="${gridY}" x2="${width - right}" y2="${gridY}"/>`;
+  }).join("");
+  const nodes = coordinates.map(point => {
+    const role = point.p === best.p ? "最佳" : point.p === worst.p ? "最差" : point.p === 50 ? "中位" : "分位";
+    return `<circle class="chart-node ${role === "最佳" ? "best" : role === "最差" ? "worst" : ""}" cx="${point.x}" cy="${point.y.toFixed(2)}" r="${point.p === 50 ? 4.5 : 3.5}"><title>P${point.p} · ${role}：${analysisNumber(point.value)} ${item.unit}</title></circle>`;
+  }).join("");
+  const labels = coordinates.map(point => `<text class="chart-axis-label" x="${point.x}" y="${height - 15}" text-anchor="middle">P${point.p}</text>`).join("");
+  const currentReference = Number.isFinite(current) ? `<line class="chart-current-line" x1="${left}" y1="${y(current).toFixed(2)}" x2="${width - right}" y2="${y(current).toFixed(2)}"/><text class="chart-current-label" x="${width - right}" y="${(y(current) - 7).toFixed(2)}" text-anchor="end">本次 ${analysisNumber(current)}</text>` : "";
+  const stat = (label, point, className) => `<div class="${className}"><span>P${point.p} · ${label}</span><strong>${analysisNumber(point.value)}</strong><small>${item.unit}</small></div>`;
+  const aria = points.map(point => `P${point.p} ${analysisNumber(point.value)} ${item.unit}`).join("，");
+
+  return `<article class="percentile-card ${config.key}"><div class="percentile-card-head"><div><strong>${config.label}</strong><span>${direction}</span></div><div class="percentile-current"><span>本次</span><strong>${analysisNumber(item.current)} <small>${item.unit}</small></strong></div></div><div class="percentile-stats">${stat("最佳", best, "best")}${stat("中位", median, "median")}${stat("最差", worst, "worst")}</div><svg class="percentile-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${config.label}历史分位，${direction}。${aria}"><defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop class="chart-fill-start"/><stop class="chart-fill-end" offset="1"/></linearGradient></defs>${grid}<line class="chart-median-line" x1="${left}" y1="${y(median.value).toFixed(2)}" x2="${width - right}" y2="${y(median.value).toFixed(2)}"/><text class="chart-median-label" x="${left}" y="${(y(median.value) - 7).toFixed(2)}">P50 中位</text>${currentReference}<path class="chart-area" d="${area}" fill="url(#${gradientId})"/><path class="chart-line" d="${line}"/>${nodes}${labels}</svg><div class="percentile-footer"><span>${deltaText(item)}</span><strong>优于 ${analysisNumber(item.superiority)}% 同组合历史</strong></div></article>`;
+}
+
 function renderAnalysis(result) {
   const analysis = result.analysis;
   const scores = result.scores;
@@ -187,12 +233,7 @@ function renderAnalysis(result) {
   text("analysis-history-note", note);
   $("percentile-area").hidden = Boolean(analysis.needed);
   if (!analysis.needed) {
-    $("percentile-rows").innerHTML = ANALYSIS_METRICS.map(config => {
-      const item = analysis.metrics[config.key];
-      const direction = item.higherBetter ? "越高越好" : "越低越好";
-      const cells = [1,5,20,50,80,95,99].map(p => `<td>${analysisNumber(item.percentiles[p])}</td>`).join("");
-      return `<tr><td><strong>${config.label}</strong><small>${config.unit} · ${direction}</small></td><td>${analysisNumber(item.current)}</td>${cells}<td>${deltaText(item)}</td></tr>`;
-    }).join("");
+    $("percentile-charts").innerHTML = ANALYSIS_METRICS.map(config => percentileChart(config, analysis.metrics[config.key])).join("");
   }
 }
 
