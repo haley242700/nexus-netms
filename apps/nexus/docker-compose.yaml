@@ -62,16 +62,18 @@ services:
       PROMETHEUS_URL: http://prometheus:9090
       LIBRESPEED_URL: http://librespeed:80
       EVENT_DB_PATH: /app/events/events.db
+      SPEEDTEST_DB_PATH: /app/speedtest/speedtest.db
+      PYTHONPATH: /app
     ports:
       - "3002:3001"
     volumes:
       - ./network-dashboard:/app/dashboard:ro
-      - ./network-dashboard/dashboard_server.py:/app/dashboard_server.py:ro
       - ./events:/app/events:ro
+      - ./speedtest:/app/speedtest
     depends_on:
       - prometheus
       - librespeed
-    command: ["python", "/app/dashboard_server.py"]
+    command: ["python", "/app/dashboard/dashboard_server.py"]
 
 volumes:
   prometheus_data:

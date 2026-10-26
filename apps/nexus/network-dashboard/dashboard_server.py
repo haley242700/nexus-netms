@@ -11,11 +11,13 @@ from urllib.parse import parse_qs, urlparse
 import requests
 
 from ap_lookup import ReyeeClient
+from speedtest_analysis import record_and_analyze
 
 PORT = int(os.getenv("DASHBOARD_PORT", "3001"))
 PROMETHEUS = os.getenv("PROMETHEUS_URL", "http://prometheus:9090").rstrip("/")
 LIBRESPEED = os.getenv("LIBRESPEED_URL", "http://librespeed:80").rstrip("/")
 EVENT_DB = os.getenv("EVENT_DB_PATH", "/app/events/events.db")
+SPEEDTEST_DB = os.getenv("SPEEDTEST_DB_PATH", "/app/events/speedtest.db")
 ROOT = Path("/app/dashboard")
 PROM_SESSION = requests.Session()
 SPEED_SESSION = requests.Session()
@@ -195,6 +197,40 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             self.send_json(502, {"connected": False, "note": "AP 查询暂时失败"})
 
+    def save_speedtest_result(self):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if length <= 0 or length > 16384:
+            self.send_json(400, {"error": "invalid request size"})
+            return
+        try:
+            payload = json.loads(self.rfile.read(length))
+            if not isinstance(payload, dict):
+                raise ValueError("invalid payload")
+        except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+            self.send_json(400, {"error": "invalid JSON"})
+            return
+        try:
+            context = AP_CLIENT.lookup_by_ip(self.client_address[0])
+        except Exception:
+            context = {"connected": False, "clientIp": self.client_address[0]}
+        display_name = preferred_client_name(context.get("clientMac"))
+        gateway_host = urlparse(getattr(AP_CLIENT, "eg_url", "")).hostname or ""
+        try:
+            result = record_and_analyze(
+                SPEEDTEST_DB, payload, context,
+                display_name or context.get("hostName"), gateway_host,
+            )
+        except (KeyError, TypeError, ValueError):
+            self.send_json(400, {"error": "download/upload/ping/jitter 必须是非负数值"})
+            return
+        except (OSError, sqlite3.Error):
+            self.send_json(503, {"error": "测速结果暂时无法保存"})
+            return
+        self.send_json(200, result)
+
     def request_body(self, length):
         remaining = length
         while remaining:
@@ -293,6 +329,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path == "/api/speedtest-results":
+            self.save_speedtest_result()
+            return
         if path.startswith(ENGINE_PREFIX + "/"):
             self.proxy_speedtest()
             return

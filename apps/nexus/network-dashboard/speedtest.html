@@ -49,6 +49,24 @@
         <article class="kpi green"><div class="kpi-top"><span>抖动</span><span class="kpi-icon">≈</span></div><div class="kpi-value"><strong id="result-jitter">--</strong><small>ms</small></div><div class="kpi-foot"><span>JITTER</span><span>越小越稳定</span></div></article>
       </section>
 
+      <section class="glass-panel panel speed-analysis" id="speed-analysis">
+        <div class="panel-head"><div><span class="section-index">03</span><h2>测速结果分析</h2></div><span class="panel-tag" id="analysis-sample">等待测速</span></div>
+        <div class="analysis-empty" id="analysis-empty"><span>ANALYSIS READY</span><strong>完成一次测速后生成成绩</strong><p>绝对评分与同终端、同接入设备、同网关的历史分位对比。</p></div>
+        <div id="analysis-content" hidden>
+          <div class="analysis-overview">
+            <div class="analysis-score-ring" id="analysis-score-ring"><div><strong id="analysis-overall">--</strong><span>综合分</span><small id="analysis-grade">--</small></div></div>
+            <div class="analysis-identity"><span>本次测速组合</span><strong id="analysis-terminal">--</strong><p id="analysis-combo">--</p><small>历史样本包含本次结果；终端优先按 MAC 识别。</small></div>
+          </div>
+          <div class="analysis-metric-grid" id="analysis-metrics"></div>
+          <div class="analysis-history-note" id="analysis-history-note"></div>
+          <div class="percentile-area" id="percentile-area">
+            <div class="percentile-title"><strong>同组合历史分位</strong><span>速率越高越好 · 延迟与抖动越低越好</span></div>
+            <div class="percentile-scroll"><table><thead><tr><th>指标</th><th>本次</th><th>P1</th><th>P5</th><th>P20</th><th>P50</th><th>P80</th><th>P95</th><th>P99</th><th>对比 P50</th></tr></thead><tbody id="percentile-rows"></tbody></table></div>
+          </div>
+          <details class="score-method"><summary>查看评分标准</summary><div><p><strong>权重</strong>下载 40% · 上传 25% · 延迟 20% · 抖动 15%。综合分：90+ 卓越，80+ 良好，70+ 中等，60+ 合格，其余待优化。</p><p><strong>速率</strong>100 / 300 / 500 / 1000 Mbps 分别对应 60 / 80 / 90 / 100 分，锚点间线性计算。</p><p><strong>延迟</strong>≤3 ms 满分；5 / 10 / 20 / 50 / 150 ms 分别约为 95 / 85 / 70 / 35 / 0 分。</p><p><strong>抖动</strong>≤1 ms 满分；2 / 5 / 10 / 20 / 80 ms 分别约为 95 / 80 / 60 / 35 / 0 分。</p></div></details>
+        </div>
+      </section>
+
       <div class="content-grid speed-grid">
         <section class="glass-panel panel span-7">
           <div class="panel-head"><div><span class="section-index">01</span><h2>当前测速环境</h2></div><button class="ap-refresh" id="ap-refresh" type="button">刷新 AP 信息</button></div>

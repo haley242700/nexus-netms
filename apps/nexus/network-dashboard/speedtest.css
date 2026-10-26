@@ -41,6 +41,44 @@
 .test-facts > div { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
 .test-facts strong { color: #cbd8ec; font-size: 11px; font-weight: 500; text-align: right; }
 .test-note { margin: 18px 0 0; color: #6f7e98; font-size: 10px; line-height: 1.8; }
+.speed-analysis { margin-bottom: 14px; }
+.speed-analysis [hidden] { display: none !important; }
+.analysis-empty { padding: 30px 16px; border: 1px dashed rgba(98,245,255,.12); border-radius: 14px; text-align: center; background: rgba(98,245,255,.015); }
+.analysis-empty span { display: block; color: var(--cyan); font-size: 8px; letter-spacing: .18em; }
+.analysis-empty strong { display: block; margin-top: 10px; font-size: 15px; font-weight: 500; }
+.analysis-empty p { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
+.analysis-overview { display: flex; align-items: center; gap: 24px; padding: 4px 0 20px; }
+.analysis-score-ring { --score: 0; flex: 0 0 126px; width: 126px; height: 126px; padding: 3px; border-radius: 50%; background: conic-gradient(var(--cyan) calc(var(--score) * 1%), rgba(98,245,255,.08) 0); box-shadow: 0 0 30px rgba(98,245,255,.08); }
+.analysis-score-ring > div { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; background: #101827; }
+.analysis-score-ring strong { color: var(--cyan); font-size: 36px; line-height: 1; font-weight: 520; letter-spacing: -.04em; }
+.analysis-score-ring span { margin-top: 6px; color: var(--muted); font-size: 9px; }
+.analysis-score-ring small { margin-top: 4px; color: var(--green); font-size: 10px; }
+.analysis-identity { min-width: 0; }
+.analysis-identity > span { color: var(--muted); font-size: 9px; }
+.analysis-identity > strong { display: block; margin-top: 7px; font-size: 20px; font-weight: 500; }
+.analysis-identity p { margin: 8px 0 0; color: var(--cyan); font-size: 12px; line-height: 1.6; }
+.analysis-identity small { display: block; margin-top: 7px; color: var(--muted); font-size: 9px; }
+.analysis-metric-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.analysis-metric { padding: 14px; border: 1px solid rgba(145,172,230,.08); border-radius: 12px; background: rgba(255,255,255,.018); }
+.analysis-metric-head { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 9px; }
+.analysis-metric-head b { color: var(--cyan); font-size: 15px; font-weight: 520; }
+.analysis-metric > strong { display: block; margin-top: 10px; color: #dceaff; font-size: 16px; font-weight: 500; }
+.analysis-metric > span { display: block; margin-top: 7px; color: #8797b2; font-size: 9px; line-height: 1.5; }
+.analysis-history-note { margin-top: 14px; padding: 10px 12px; border-radius: 9px; background: rgba(255,194,107,.055); color: #d6b87e; font-size: 10px; line-height: 1.6; }
+.analysis-history-note:empty { display: none; }
+.percentile-area { margin-top: 18px; }
+.percentile-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.percentile-title strong { font-size: 12px; font-weight: 500; }.percentile-title span { color: var(--muted); font-size: 9px; }
+.percentile-scroll { overflow-x: auto; border: 1px solid rgba(145,172,230,.07); border-radius: 11px; }
+.percentile-scroll table { width: 100%; min-width: 850px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.percentile-scroll th,.percentile-scroll td { padding: 11px 10px; border-bottom: 1px solid rgba(255,255,255,.045); text-align: right; white-space: nowrap; font-size: 10px; }
+.percentile-scroll th { background: rgba(98,245,255,.025); color: var(--muted); font-size: 8px; font-weight: 500; }
+.percentile-scroll th:first-child,.percentile-scroll td:first-child { text-align: left; }
+.percentile-scroll td:first-child strong { display: block; font-size: 11px; font-weight: 500; }.percentile-scroll td:first-child small { color: var(--muted); font-size: 8px; }
+.percentile-scroll td:nth-child(2) { color: var(--cyan); font-weight: 600; }.percentile-scroll td:last-child { color: #b9c9e0; }
+.percentile-scroll tr:last-child td { border-bottom: 0; }
+.score-method { margin-top: 14px; color: var(--muted); font-size: 10px; }
+.score-method summary { width: fit-content; color: #9aabc5; cursor: pointer; }.score-method div { padding: 5px 0 0; line-height: 1.75; }.score-method p { margin: 7px 0; }.score-method strong { color: #cbd8ec; font-weight: 500; }
 body.testing .speed-stage .status-dot { animation: pulse .8s ease-in-out infinite; }
 @media (min-width:2400px) { .speed-reading strong { font-size: 52px; } }
 @media (max-width:1050px) { .speed-hero { grid-template-columns: minmax(0,1fr) 300px; padding: 24px; }.speed-copy h1 { font-size: 42px; }.ap-context-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
@@ -51,5 +89,7 @@ body.testing .speed-stage .status-dot { animation: pulse .8s ease-in-out infinit
   .speed-kpis .kpi-value strong { font-size: 24px; }.speed-kpis .kpi-foot { font-size: 7px; }
   .ap-context-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }.ap-context-grid > div { padding: 12px 10px; }.ap-context-grid strong { font-size: 12px; }.ap-context-grid span { font-size: 8px; }
   .test-facts > div { gap: 10px; }.test-facts strong { font-size: 10px; }.test-note { font-size: 9px; }
+  .speed-analysis { padding: 17px 14px; }.analysis-overview { gap: 15px; }.analysis-score-ring { flex-basis: 104px; width: 104px; height: 104px; }.analysis-score-ring strong { font-size: 29px; }.analysis-identity > strong { font-size: 16px; }.analysis-identity p { font-size: 10px; }.analysis-identity small { font-size: 8px; }
+  .analysis-metric-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }.analysis-metric { padding: 11px; }.analysis-metric > strong { font-size: 14px; }.percentile-title { align-items: flex-start; flex-direction: column; gap: 5px; }.analysis-empty { padding: 24px 10px; }.analysis-empty p { font-size: 9px; line-height: 1.7; }
 }
 @media (max-width:380px) { .speed-copy h1 { font-size: 32px; }.ap-context-grid { grid-template-columns: 1fr; }.speed-kpis .kpi-value strong { font-size: 21px; } }

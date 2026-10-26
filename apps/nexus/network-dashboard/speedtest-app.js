@@ -93,6 +93,12 @@ function renderUpdate(data) {
 
 function resetResults() {
   latestData = null;
+  analysisRequestId++;
+  $("analysis-content").hidden = true;
+  $("analysis-empty").hidden = false;
+  $("analysis-empty").querySelector("strong").textContent = "测速完成后生成最新成绩";
+  $("analysis-empty").querySelector("p").textContent = "本次结果保存后，将与当前设备组合的历史成绩对比。";
+  text("analysis-sample", "等待测速");
   for (const id of ["result-download", "result-upload", "result-ping", "result-jitter", "speed-live"]) text(id, "--");
   text("speed-unit", "Mbps");
   text("download-progress", "等待测速");
@@ -134,8 +140,83 @@ engine.onend = aborted => {
   const when = new Date().toLocaleTimeString("zh-CN", {hour12:false, hour:"2-digit", minute:"2-digit"});
   text("last-test", when);
   text("last-test-ap", apSnapshot?.connected ? `测速环境：${apSnapshot.apName}` : "本次测速未获取到 AP 信息");
+  saveSpeedtestAnalysis(latestData);
   refreshApInfo();
 };
+
+let analysisRequestId = 0;
+const ANALYSIS_METRICS = [
+  {key:"download", label:"下载速率", unit:"Mbps"},
+  {key:"upload", label:"上传速率", unit:"Mbps"},
+  {key:"ping", label:"网络延迟", unit:"ms"},
+  {key:"jitter", label:"抖动", unit:"ms"},
+];
+
+function analysisNumber(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return "--";
+  return parsed >= 100 ? parsed.toFixed(1) : parsed.toFixed(2);
+}
+
+function deltaText(item) {
+  const delta = Number(item.deltaMedian);
+  if (!Number.isFinite(delta)) return "等待更多历史样本";
+  const better = item.higherBetter ? delta > 0 : delta < 0;
+  const verdict = Math.abs(delta) < 0.001 ? "持平" : better ? "更优" : "偏弱";
+  return `较 P50 ${delta > 0 ? "+" : ""}${analysisNumber(delta)} ${item.unit} · ${verdict}`;
+}
+
+function renderAnalysis(result) {
+  const analysis = result.analysis;
+  const scores = result.scores;
+  $("analysis-empty").hidden = true;
+  $("analysis-content").hidden = false;
+  text("analysis-overall", analysisNumber(scores.overall));
+  text("analysis-grade", scores.grade);
+  $("analysis-score-ring").style.setProperty("--score", scores.overall);
+  text("analysis-terminal", result.terminal);
+  const access = result.identity.accessType === "wireless" ? "无线" : "有线";
+  text("analysis-combo", `${access} · ${result.identity.connectionDevice} → ${result.identity.gateway}`);
+  text("analysis-sample", `${analysis.sampleSize} 次样本${analysis.reliable ? "" : " · 样本较少"}`);
+  $("analysis-metrics").innerHTML = ANALYSIS_METRICS.map(config => {
+    const item = analysis.metrics[config.key];
+    const comparison = item.percentiles ? `优于 ${analysisNumber(item.superiority)}% 同组合历史` : `还需 ${analysis.needed} 次启用历史对比`;
+    return `<article class="analysis-metric"><div class="analysis-metric-head"><span>${config.label}</span><b>${analysisNumber(scores.metrics[config.key])}</b></div><strong>${analysisNumber(item.current)} ${config.unit}</strong><span>${comparison}</span></article>`;
+  }).join("");
+  const note = analysis.needed ? `当前组合已保存 ${analysis.sampleSize} 次结果，再完成 ${analysis.needed} 次即可计算历史分位。` : !analysis.reliable ? `当前为 ${analysis.sampleSize} 次早期样本，分位和排名仅供参考；达到 ${analysis.reliableSamples} 次后更稳定。` : `基于当前组合的 ${analysis.sampleSize} 次历史结果计算。`;
+  text("analysis-history-note", note);
+  $("percentile-area").hidden = Boolean(analysis.needed);
+  if (!analysis.needed) {
+    $("percentile-rows").innerHTML = ANALYSIS_METRICS.map(config => {
+      const item = analysis.metrics[config.key];
+      const direction = item.higherBetter ? "越高越好" : "越低越好";
+      const cells = [1,5,20,50,80,95,99].map(p => `<td>${analysisNumber(item.percentiles[p])}</td>`).join("");
+      return `<tr><td><strong>${config.label}</strong><small>${config.unit} · ${direction}</small></td><td>${analysisNumber(item.current)}</td>${cells}<td>${deltaText(item)}</td></tr>`;
+    }).join("");
+  }
+}
+
+async function saveSpeedtestAnalysis(data) {
+  const requestId = ++analysisRequestId;
+  $("analysis-content").hidden = true;
+  $("analysis-empty").hidden = false;
+  $("analysis-empty").querySelector("strong").textContent = "正在保存并分析本次成绩…";
+  try {
+    const response = await fetch("/api/speedtest-results", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({download:data.dlStatus, upload:data.ulStatus, ping:data.pingStatus, jitter:data.jitterStatus}),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    if (!pageActive || requestId !== analysisRequestId) return;
+    renderAnalysis(result);
+  } catch (error) {
+    if (!pageActive || requestId !== analysisRequestId) return;
+    $("analysis-empty").querySelector("strong").textContent = "结果分析暂时不可用";
+    $("analysis-empty").querySelector("p").textContent = error.message || "测速已完成，但结果未能保存";
+    text("analysis-sample", "保存失败");
+  }
+}
 
 function setContextValue(id, value, fallback = "--") {
   const cleaned = String(value ?? "").trim();

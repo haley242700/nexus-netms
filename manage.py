@@ -18,6 +18,7 @@ PYTHON_TESTS = [
     "tests/test_event_store_v1.py",
     "tests/test_dashboard_events_api.py",
     "tests/test_event_migration.py",
+    "tests/test_speedtest_analysis.py",
     "tests/test_speedtest_integration.py",
     "tests/nexus_scale_test.py",
 ]
@@ -44,7 +45,7 @@ FORBIDDEN_PACKAGE_NAMES = {".env", "login.env", "nas.env", "cloud.env", "htpassw
 
 def environment():
     env = os.environ.copy()
-    paths = [str(ROOT), str(ROOT / "apps" / "speedtest-ap")]
+    paths = [str(ROOT), str(ROOT / "apps" / "speedtest-ap"), str(ROOT / "apps" / "nexus" / "network-dashboard")]
     if env.get("PYTHONPATH"):
         paths.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(paths)
@@ -150,7 +151,8 @@ def offline_test(args):
     recent_test_summary()
     if not passed:
         raise RuntimeError("全量测试存在失败模块，详情见上方输出")
-    print("离线全量测试通过：14 个模块全部执行，未连接 NAS、睿易后台或生产看板。")
+    module_count = 1 + len(PYTHON_TESTS) + len(JS_SOURCES) + len(JS_TESTS)
+    print(f"离线全量测试通过：{module_count} 个模块全部执行，未连接 NAS、睿易后台或生产看板。")
     print(f"计时历史：{TEST_HISTORY}")
 
 

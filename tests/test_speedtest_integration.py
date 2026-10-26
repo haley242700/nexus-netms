@@ -74,6 +74,9 @@ db.execute("INSERT OR REPLACE INTO client_names(mac,name) VALUES('AA:BB:CC:DD:EE
 db.commit()
 db.close()
 module.EVENT_DB = str(name_db)
+speed_db = ROOT / "artifacts" / "tmp" / "speedtest-results-test.db"
+speed_db.unlink(missing_ok=True)
+module.SPEEDTEST_DB = str(speed_db)
 
 upstream = ThreadingHTTPServer(("127.0.0.1", 0), UpstreamHandler)
 dashboard = ThreadingHTTPServer(("127.0.0.1", 0), module.Handler)
@@ -98,6 +101,18 @@ try:
     assert ap["connected"] and ap["apName"] == "书房AP"
     assert ap["displayName"] == "我的手机", ap
     assert module.AP_CLIENT.seen == ["127.0.0.1"], module.AP_CLIENT.seen
+
+    analysis = None
+    for index in range(1, 6):
+        response = client.post(base + "/api/speedtest-results", json={"download": index * 100, "upload": index * 20, "ping": index, "jitter": index / 2}, timeout=5)
+        assert response.status_code == 200, response.text
+        analysis = response.json()
+    assert analysis["saved"] and analysis["terminal"] == "我的手机"
+    assert analysis["identity"]["connectionDevice"] == "书房AP"
+    assert analysis["analysis"]["sampleSize"] == 5
+    assert analysis["analysis"]["metrics"]["download"]["percentiles"]["50"] == 300
+    invalid = client.post(base + "/api/speedtest-results", json={"download": -1, "upload": 1, "ping": 1, "jitter": 1}, timeout=5)
+    assert invalid.status_code == 400
 
     engine = client.get(base + "/speedtest/engine/speedtest.js", timeout=5)
     assert engine.status_code == 200 and engine.text == "function Speedtest(){}"
