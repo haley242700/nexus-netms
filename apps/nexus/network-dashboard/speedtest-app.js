@@ -180,10 +180,10 @@ function percentileChart(config, item) {
   minimum = Math.max(0, minimum - padding);
   maximum += padding;
   const width = 560;
-  const height = 210;
+  const height = 235;
   const left = 24;
   const right = 24;
-  const top = 25;
+  const top = 62;
   const bottom = 43;
   const baseline = height - bottom;
   const x = index => left + index * (width - left - right) / (points.length - 1);
@@ -196,6 +196,7 @@ function percentileChart(config, item) {
   const worst = item.higherBetter ? points[0] : points[points.length - 1];
   const direction = item.higherBetter ? "越高越好" : "越低越好";
   const gradientId = `percentile-gradient-${config.key}`;
+  const arrowId = `percentile-arrow-${config.key}`;
   const grid = [0,0.5,1].map(ratio => {
     const gridY = top + ratio * (baseline - top);
     return `<line class="chart-grid" x1="${left}" y1="${gridY}" x2="${width - right}" y2="${gridY}"/>`;
@@ -205,11 +206,32 @@ function percentileChart(config, item) {
     return `<circle class="chart-node ${role === "最佳" ? "best" : role === "最差" ? "worst" : ""}" cx="${point.x}" cy="${point.y.toFixed(2)}" r="${point.p === 50 ? 4.5 : 3.5}"><title>P${point.p} · ${role}：${analysisNumber(point.value)} ${item.unit}</title></circle>`;
   }).join("");
   const labels = coordinates.map(point => `<text class="chart-axis-label" x="${point.x}" y="${height - 15}" text-anchor="middle">P${point.p}</text>`).join("");
-  const currentReference = Number.isFinite(current) ? `<line class="chart-current-line" x1="${left}" y1="${y(current).toFixed(2)}" x2="${width - right}" y2="${y(current).toFixed(2)}"/><text class="chart-current-label" x="${width - right}" y="${(y(current) - 7).toFixed(2)}" text-anchor="end">本次 ${analysisNumber(current)}</text>` : "";
+  const superiority = Number(item.superiority);
+  let currentReference = "";
+  if (Number.isFinite(current) && Number.isFinite(superiority)) {
+    const rawPercentile = item.higherBetter ? superiority : 100 - superiority;
+    const currentPercentile = Math.max(1, Math.min(99, rawPercentile));
+    const upperIndex = coordinates.findIndex(point => point.p >= currentPercentile);
+    let currentX = coordinates[0].x;
+    let currentY = coordinates[0].y;
+    if (upperIndex < 0) {
+      currentX = coordinates[coordinates.length - 1].x;
+      currentY = coordinates[coordinates.length - 1].y;
+    } else if (upperIndex > 0) {
+      const lower = coordinates[upperIndex - 1];
+      const upper = coordinates[upperIndex];
+      const ratio = (currentPercentile - lower.p) / (upper.p - lower.p);
+      currentX = lower.x + (upper.x - lower.x) * ratio;
+      currentY = lower.y + (upper.y - lower.y) * ratio;
+    }
+    const labelX = Math.max(65, Math.min(width - 65, currentX));
+    const percentileLabel = Number(currentPercentile.toFixed(1));
+    currentReference = `<text class="chart-current-label" x="${labelX.toFixed(2)}" y="17" text-anchor="middle">本次 · P${percentileLabel}</text><line class="chart-current-arrow" x1="${currentX.toFixed(2)}" y1="29" x2="${currentX.toFixed(2)}" y2="${(currentY - 7).toFixed(2)}" marker-end="url(#${arrowId})"/><circle class="chart-current-dot" cx="${currentX.toFixed(2)}" cy="${currentY.toFixed(2)}" r="4"><title>本次 ${analysisNumber(current)} ${item.unit} · 数值分位 P${percentileLabel}</title></circle>`;
+  }
   const stat = (label, point, className) => `<div class="${className}"><span>P${point.p} · ${label}</span><strong>${analysisNumber(point.value)}</strong><small>${item.unit}</small></div>`;
   const aria = points.map(point => `P${point.p} ${analysisNumber(point.value)} ${item.unit}`).join("，");
 
-  return `<article class="percentile-card ${config.key}"><div class="percentile-card-head"><div><strong>${config.label}</strong><span>${direction}</span></div><div class="percentile-current"><span>本次</span><strong>${analysisNumber(item.current)} <small>${item.unit}</small></strong></div></div><div class="percentile-stats">${stat("最佳", best, "best")}${stat("中位", median, "median")}${stat("最差", worst, "worst")}</div><svg class="percentile-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${config.label}历史分位，${direction}。${aria}"><defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop class="chart-fill-start"/><stop class="chart-fill-end" offset="1"/></linearGradient></defs>${grid}<line class="chart-median-line" x1="${left}" y1="${y(median.value).toFixed(2)}" x2="${width - right}" y2="${y(median.value).toFixed(2)}"/><text class="chart-median-label" x="${left}" y="${(y(median.value) - 7).toFixed(2)}">P50 中位</text>${currentReference}<path class="chart-area" d="${area}" fill="url(#${gradientId})"/><path class="chart-line" d="${line}"/>${nodes}${labels}</svg><div class="percentile-footer"><span>${deltaText(item)}</span><strong>优于 ${analysisNumber(item.superiority)}% 同组合历史</strong></div></article>`;
+  return `<article class="percentile-card ${config.key}"><div class="percentile-card-head"><div><strong>${config.label}</strong><span>${direction}</span></div><div class="percentile-current"><span>本次</span><strong>${analysisNumber(item.current)} <small>${item.unit}</small></strong></div></div><div class="percentile-stats">${stat("最佳", best, "best")}${stat("中位", median, "median")}${stat("最差", worst, "worst")}</div><svg class="percentile-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${config.label}历史分位，${direction}。${aria}"><defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop class="chart-fill-start"/><stop class="chart-fill-end" offset="1"/></linearGradient><marker id="${arrowId}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path class="chart-current-arrowhead" d="M0,0 L6,3 L0,6 Z"/></marker></defs>${grid}<line class="chart-median-line" x1="${left}" y1="${y(median.value).toFixed(2)}" x2="${width - right}" y2="${y(median.value).toFixed(2)}"/><text class="chart-median-label" x="${left}" y="${(y(median.value) - 7).toFixed(2)}">P50 中位</text><path class="chart-area" d="${area}" fill="url(#${gradientId})"/><path class="chart-line" d="${line}"/>${nodes}${labels}${currentReference}</svg><div class="percentile-footer"><span>${deltaText(item)}</span><strong>优于 ${analysisNumber(item.superiority)}% 同组合历史</strong></div></article>`;
 }
 
 function renderAnalysis(result) {

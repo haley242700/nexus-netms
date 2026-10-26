@@ -70,15 +70,15 @@
 .percentile-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .percentile-title strong { font-size: 12px; font-weight: 500; }.percentile-title span { color: var(--muted); font-size: 9px; }
 .percentile-charts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
-.percentile-card { --chart: #62f5ff; --chart-rgb: 98,245,255; min-width: 0; padding: 16px 17px 13px; overflow: hidden; border: 1px solid rgba(var(--chart-rgb),.11); border-radius: 14px; background: radial-gradient(circle at 85% 0, rgba(var(--chart-rgb),.07), transparent 38%), linear-gradient(145deg, rgba(20,30,48,.7), rgba(9,14,25,.48)); box-shadow: inset 0 1px 0 rgba(255,255,255,.025); font-variant-numeric: tabular-nums; }
+.percentile-card { --chart: #62f5ff; --chart-rgb: 98,245,255; --current: #ff7ad9; min-width: 0; padding: 16px 17px 13px; overflow: hidden; border: 1px solid rgba(var(--chart-rgb),.11); border-radius: 14px; background: radial-gradient(circle at 85% 0, rgba(var(--chart-rgb),.07), transparent 38%), linear-gradient(145deg, rgba(20,30,48,.7), rgba(9,14,25,.48)); box-shadow: inset 0 1px 0 rgba(255,255,255,.025); font-variant-numeric: tabular-nums; }
 .percentile-card.ping,.percentile-card.jitter { --chart: #aa96ff; --chart-rgb: 170,150,255; }
 .percentile-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .percentile-card-head > div:first-child > strong { display: block; color: #e2edff; font-size: 13px; font-weight: 520; }
 .percentile-card-head > div:first-child > span { display: inline-block; margin-top: 6px; padding: 3px 7px; border-radius: 5px; background: rgba(var(--chart-rgb),.07); color: var(--chart); font-size: 8px; }
 .percentile-current { text-align: right; }
-.percentile-current > span { display: block; color: var(--muted); font-size: 8px; }
-.percentile-current > strong { display: block; margin-top: 4px; color: var(--chart); font-size: 19px; line-height: 1; font-weight: 550; }
-.percentile-current small { color: #7f91ad; font-size: 8px; font-weight: 400; }
+.percentile-current > span { display: block; color: var(--current); opacity: .75; font-size: 8px; }
+.percentile-current > strong { display: block; margin-top: 4px; color: var(--current); font-size: 19px; line-height: 1; font-weight: 550; }
+.percentile-current small { color: #a98ba9; font-size: 8px; font-weight: 400; }
 .percentile-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-top: 14px; }
 .percentile-stats > div { min-width: 0; padding: 8px 9px; border: 1px solid rgba(145,172,230,.06); border-radius: 8px; background: rgba(255,255,255,.018); }
 .percentile-stats span { display: block; color: var(--muted); font-size: 8px; white-space: nowrap; }
@@ -92,7 +92,8 @@
 .chart-node { fill: #101827; stroke: var(--chart); stroke-width: 1.8; }.chart-node.best { stroke: var(--green); }.chart-node.worst { stroke: var(--amber); }
 .chart-axis-label { fill: #73849f; font-size: 9px; }
 .chart-median-line { stroke: rgba(var(--chart-rgb),.24); stroke-width: 1; stroke-dasharray: 3 5; }.chart-median-label { fill: var(--chart); opacity: .65; font-size: 8px; }
-.chart-current-line { stroke: rgba(255,194,107,.7); stroke-width: 1.2; stroke-dasharray: 6 4; }.chart-current-label { fill: #ffc26b; font-size: 8px; }
+.chart-current-arrow { stroke: var(--current); stroke-width: 1.6; filter: drop-shadow(0 0 4px rgba(255,122,217,.35)); }.chart-current-arrowhead,.chart-current-dot { fill: var(--current); }.chart-current-dot { stroke: rgba(255,255,255,.65); stroke-width: 1; }
+.chart-current-label { fill: var(--current); font-size: 9px; font-weight: 600; paint-order: stroke; stroke: rgba(9,14,25,.85); stroke-width: 3px; }
 .percentile-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid rgba(145,172,230,.06); color: #9aabc3; font-size: 9px; line-height: 1.5; }
 .percentile-footer strong { color: var(--chart); font-size: 8px; font-weight: 500; text-align: right; }
 @media (max-width:720px) { .percentile-charts { grid-template-columns: 1fr; }.percentile-card { padding: 14px 12px 12px; }.percentile-footer { align-items: flex-start; flex-direction: column; gap: 4px; }.percentile-footer strong { text-align: left; } }
