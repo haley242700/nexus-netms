@@ -55,7 +55,7 @@ const renderPercentileChart = new Function(`${numberSource}\n${deltaSource}\n${c
 const latencyChart = renderPercentileChart({key:"ping", label:"网络延迟"}, {current:4, unit:"ms", higherBetter:false, deltaMedian:-1, superiority:80, percentiles:{1:2,5:3,20:4,50:5,80:7,95:9,99:12}});
 if ((latencyChart.match(/class="chart-node/g) || []).length !== 7) throw new Error("分位图表必须包含七个节点");
 if (!latencyChart.includes("P1 · 最差") || !latencyChart.includes("P99 · 最佳")) throw new Error("低延迟指标未统一为百分位越高越优秀");
-if (!latencyChart.includes("chart-current-arrow") || !latencyChart.includes("本次 · P80") || latencyChart.includes("chart-current-line") || !latencyChart.includes("P50 中位") || latencyChart.includes("NaN")) throw new Error("本次成绩箭头或延迟优劣百分位异常");
+if (!latencyChart.includes("chart-current-arrow") || !latencyChart.includes("chart-current-badge") || !latencyChart.includes("chart-current-halo") || !latencyChart.includes("本次 · P80") || latencyChart.includes("chart-current-line") || !latencyChart.includes("P50 中位") || latencyChart.includes("NaN")) throw new Error("本次成绩箭头、玻璃标签或延迟优劣百分位异常");
 const latencyValues = [...latencyChart.matchAll(/<title>P\d+ · [^：]+：([\d.]+) ms<\/title>/g)].map(match => Number(match[1]));
 if (latencyValues.length !== 7 || !latencyValues.every((value, index) => index === 0 || latencyValues[index - 1] >= value)) throw new Error("延迟曲线必须按数值降序排列");
 const downloadChart = renderPercentileChart({key:"download", label:"下载速率"}, {current:1600, unit:"Mbps", higherBetter:true, deltaMedian:100, superiority:80, percentiles:{1:500,5:800,20:1000,50:1500,80:1600,95:2000,99:2400}});
@@ -65,6 +65,12 @@ const worstJitterChart = renderPercentileChart({key:"jitter", label:"抖动"}, {
 if (!worstJitterChart.includes("本次 · P7.1") || worstJitterChart.includes("本次 · P92.9") || !worstJitterChart.includes("P1 · 最差")) throw new Error("最差抖动样本的优劣百分位显示错误");
 const flatChart = renderPercentileChart({key:"jitter", label:"抖动"}, {current:0, unit:"ms", higherBetter:false, deltaMedian:0, superiority:50, percentiles:{1:0,5:0,20:0,50:0,80:0,95:0,99:0}});
 if (flatChart.includes("NaN") || flatChart.includes("Infinity")) throw new Error("相同分位值导致图表坐标异常");
+const environmentSource = app.match(/function environmentName\([\s\S]*?\n\}/)?.[0];
+if (!environmentSource) throw new Error("缺少测速环境安全回退");
+const getEnvironmentName = new Function(`${environmentSource}; return environmentName;`)();
+if (getEnvironmentName({connected:true, apName:undefined, switchName:"ES209MG-P"}) !== "ES209MG-P") throw new Error("AP 名称缺失时未回退到交换机");
+if (getEnvironmentName({connected:true, apName:"负一电脑房AP", switchName:"ES209MG-P"}) !== "负一电脑房AP") throw new Error("无线测速环境未优先显示 AP");
+if (getEnvironmentName({connected:false, apName:"undefined"}) !== "未识别接入设备") throw new Error("无效环境名称会产生 undefined 或空值");
 const rateSource = app.match(/function wirelessRate\([\s\S]*?\n\}/)?.[0];
 if (!rateSource) throw new Error("缺少协商速率格式化");
 const formatWirelessRate = new Function(`${rateSource}; return wirelessRate;`)();
