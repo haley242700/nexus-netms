@@ -76,12 +76,21 @@ def superiority(values, current, higher_better):
 
 
 def context_identity(context, gateway_host):
-    """生成稳定组合键。睿易没有交换机拓扑时明确使用未识别交换机。"""
+    """生成稳定组合键；有线交换机以 SN 隔离历史，以型号和 IP 展示。"""
     client_ip = clean_text(context.get("clientIp"), "未知 IP", 64)
     client_mac = clean_text(context.get("clientMac"), "", 32).lower()
     wireless = bool(clean_text(context.get("band"), "") or clean_text(context.get("ssid"), ""))
     access_type = "wireless" if wireless else "wired"
-    connection_device = clean_text(context.get("apName")) if wireless else "未识别交换机"
+    switch_sn = clean_text(context.get("switchSn"), "", 64)
+    if wireless:
+        connection_device = clean_text(context.get("apName"))
+        connection_key = connection_device
+    elif switch_sn:
+        connection_device = clean_text(context.get("switchName") or context.get("switchModel"), f"交换机 {switch_sn}")
+        connection_key = f"switch:{switch_sn}"
+    else:
+        connection_device = "未识别交换机"
+        connection_key = connection_device
     gateway = f"网关 {gateway_host}" if gateway_host else "未识别网关"
     client_key = client_mac or f"ip:{client_ip}"
     return {
@@ -90,7 +99,7 @@ def context_identity(context, gateway_host):
         "accessType": access_type,
         "connectionDevice": connection_device,
         "gateway": gateway,
-        "comboKey": "|".join((client_key, access_type, connection_device, gateway)),
+        "comboKey": "|".join((client_key, access_type, connection_key, gateway)),
     }
 
 
@@ -148,7 +157,10 @@ def record_and_analyze(path, payload, context, client_name, gateway_host):
     identity = context_identity(context, gateway_host)
     safe_context = {
         key: clean_text(context.get(key), "", 200)
-        for key in ("clientMac", "hostName", "apName", "apSn", "ssid", "band", "channel", "rssi", "rxRate")
+        for key in (
+            "clientMac", "hostName", "apName", "apSn", "ssid", "band", "channel", "rssi", "rxRate",
+            "switchName", "switchModel", "switchIp", "switchSn",
+        )
     }
     name = clean_text(client_name or context.get("hostName") or context.get("clientIp"), "未知终端")
     db = connect(path)

@@ -23,6 +23,13 @@ wired = {
     "connected": True, "clientIp": "192.168.110.50", "clientMac": "AA:BB:CC:DD:EE:FF",
     "hostName": "PC", "apName": "负一电脑房AP", "band": "", "ssid": "",
 }
+mapped_wired = {
+    **wired,
+    "switchName": "ES209MG-P · 192.168.110.16",
+    "switchModel": "RG-ES209MG-P",
+    "switchIp": "192.168.110.16",
+    "switchSn": "G1V61MP005183",
+}
 with tempfile.TemporaryDirectory(dir=ROOT / "artifacts" / "tmp") as tmp:
     path = str(Path(tmp) / "speedtest.db")
     first = record_and_analyze(path, {"download": 100, "upload": 10, "ping": 1, "jitter": 1}, wireless, "我的手机", "192.168.110.1")
@@ -47,4 +54,12 @@ with tempfile.TemporaryDirectory(dir=ROOT / "artifacts" / "tmp") as tmp:
     assert other["identity"]["connectionDevice"] == "未识别交换机"
     assert other["analysis"]["sampleSize"] == 1, "不同终端和接入组合不得混合历史"
 
-print("测速分析验证通过：评分、分位、优劣方向、样本门槛和组合隔离均正确。")
+    mapped = record_and_analyze(path, {"download": 888, "upload": 88, "ping": 2, "jitter": 1}, mapped_wired, "书房电脑", "192.168.110.1")
+    assert mapped["identity"]["connectionDevice"] == "ES209MG-P · 192.168.110.16"
+    assert "switch:G1V61MP005183" in mapped["identity"]["comboKey"]
+    assert mapped["context"]["switchSn"] == "G1V61MP005183"
+    assert mapped["analysis"]["sampleSize"] == 1, "未识别与已识别交换机的历史不得混合"
+    moved_ip = record_and_analyze(path, {"download": 777, "upload": 77, "ping": 2, "jitter": 1}, {**mapped_wired, "switchIp": "192.168.110.99"}, "书房电脑", "192.168.110.1")
+    assert moved_ip["analysis"]["sampleSize"] == 2, "交换机 IP 变化不得拆散同一 SN 的历史"
+
+print("测速分析验证通过：评分、分位、组合隔离及交换机 SN 稳定标识均正确。")

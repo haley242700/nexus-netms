@@ -18,6 +18,7 @@ PYTHON_TESTS = [
     "tests/test_event_store_v1.py",
     "tests/test_dashboard_events_api.py",
     "tests/test_event_migration.py",
+    "tests/test_ap_lookup.py",
     "tests/test_speedtest_analysis.py",
     "tests/test_speedtest_integration.py",
     "tests/nexus_scale_test.py",
