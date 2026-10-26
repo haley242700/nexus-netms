@@ -8,6 +8,7 @@
 - 睿易诊断与采集工具仅使用只读接口，不修改 AP 或网络配置。
 - `manage.py test` 和 `manage.py package` 完全离线，不连接 NAS 或生产后台。
 - `manage.py verify` 会访问内网生产服务，但只执行读取和验证。
+- **AI 会话请先阅读 [AGENTS.md](AGENTS.md)**（操作红线、环境速查、事故档案）；新机器搭建见 [docs/环境搭建.md](docs/环境搭建.md)。
 
 ## 项目结构
 
