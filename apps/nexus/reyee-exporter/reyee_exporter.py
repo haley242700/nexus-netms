@@ -275,7 +275,11 @@ def collect() -> None:
             powers = str(ap.get("txpower") or "").split(",")
             for i, band in enumerate(bands):
                 bl = dict(base, band=band)
-                s.add("reyee_ap_channel", num(channels[i] if i < len(channels) else None), bl)
+                raw_channel = str(channels[i] if i < len(channels) else "").strip()
+                automatic = raw_channel.lower().startswith("auto-")
+                channel = num(raw_channel[5:] if automatic else raw_channel)
+                s.add("reyee_ap_channel", channel,
+                      dict(bl, mode="auto" if automatic else "manual"))
                 s.add("reyee_ap_channel_utilization_percent", num(chutils[i] if i < len(chutils) else None), bl)
                 s.add("reyee_ap_noise_floor_dbm", num(noises[i] if i < len(noises) else None), bl)
                 s.add("reyee_ap_txpower_percent", num(powers[i] if i < len(powers) else None), bl)

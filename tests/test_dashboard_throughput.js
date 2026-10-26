@@ -15,7 +15,8 @@ assert(styles.includes("width: min(520px,100%)"), "弹窗必须使用紧凑宽�
 assert(styles.includes("rgba(29,40,63,.30)") && styles.includes("rgba(10,17,30,.30)") && styles.includes("blur(28px)"), "弹窗必须使用 70% 透明毛玻璃背景");
 assert(styles.includes(".score-modal.is-open") && source.includes("setTimeout(hide, 220)"), "弹窗必须支持渐入渐出");
 assert(!source.includes("radio-track") && !source.includes("radio-fill"), "AP 矩阵信道编号旁不得显示进度条");
-assert(source.includes("<span>CH ${channel ? Math.round(channel) : \"--\"}</span>"), "AP 矩阵必须保留信道编号");
+assert(source.includes("channel.automatic ? \" · 自动\" : \"\""), "AP 矩阵必须标识自动信道");
+assert(source.includes("r.metric.mode === \"auto\""), "AP 矩阵必须读取信道模式");
 assert(page.includes('id="flow-canvas"'));
 assert(page.includes('class="flow-node-meter wan-meter"><span>上行总量'));
 assert(page.includes('class="flow-node-meter home-meter"><span>下行总量'));
@@ -52,6 +53,7 @@ context.esc = value => String(value ?? "");
 vm.createContext(context);
 vm.runInContext(source.slice(source.indexOf("const REFRESH_INTERVAL"), source.indexOf("let refreshing")), context);
 vm.runInContext(source.slice(source.indexOf("const AP_ORDER"), source.indexOf("function renderAps")), context);
+vm.runInContext(source.slice(source.indexOf("function renderAps"), source.indexOf("const CLIENT_PAGE_SIZE")), context);
 
 assert.strictEqual(context.formatRate(0).value, "0");
 assert.strictEqual(context.formatRate(12500000).unit, "Mbps");
@@ -114,6 +116,17 @@ context.renderApThroughput([
 assert(elements["ap-throughput-list"].innerHTML.includes("一楼主卧AP"));
 assert(elements["ap-throughput-list"].innerHTML.includes("16.00 Mbps"));
 assert(elements["ap-throughput-list"].innerHTML.includes("2.00 MB"));
+
+context.testAps = [
+  {metric: {ap: "负一卧室AP", model: "EAP162", ip: "192.168.110.10"}, value: [0, "1"]},
+];
+context.testChannels = [
+  {metric: {ap: "负一卧室AP", band: "2.4G", mode: "auto"}, value: [0, "1"]},
+  {metric: {ap: "负一卧室AP", band: "5G", mode: "manual"}, value: [0, "149"]},
+];
+vm.runInContext("renderAps(testAps, [], [], testChannels)", context);
+assert(elements["ap-grid"].innerHTML.includes("CH 1 · 自动"), "自动信道必须显示当前编号和模式");
+assert(elements["ap-grid"].innerHTML.includes("CH 149</span>"), "手动信道不得添加自动标识");
 
 const animated = {textContent: ""};
 context.window.matchMedia = () => ({matches: false});
