@@ -67,6 +67,7 @@ git 推送注意：GitHub 直连会被墙。VPN（小黄JS PC 端）开启时它
 - 治标：睿易 AI 防护已开单 IP 限流 249
 - 治本：电视已装机场官方客户端小黄JS（包名 `com.xhjs`，ClashMeta 内核），**智能分流模式**，2026-10-26 20:31 已连接
 - 待办：观察 WAN 会话趋势（MACC 诊断页历史趋势图），稳定数日后由人类决策是否撤限流
+- 验证报告：`artifacts/tv-vpn-effectiveness-20261026.md`——10-26 22:33 VPN 后全面诊断「未发现异常」，方案有效；建议观察 2-3 天（重点夜间待机）后由人类决策是否撤限流 249
 
 **电视 ADB 操作手册（血泪经验）**
 - 索尼 kcm 会把 ADB 注入的数字按 T9 改写（2→a、@ 丢失）→ 已装 ADBKeyBoard（`com.android.adbkeyboard/.AdbIME`），用 `am broadcast -a ADB_INPUT_TEXT --es msg '...'` 注入
